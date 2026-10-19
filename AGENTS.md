@@ -34,7 +34,7 @@ The Xbox kernel, the XDK libraries (D3D8, DSOUND, XAPI, XInput) and the hardware
 
 1. 원본 게임 로직을 보존한다. 재컴파일된 코드가 기준 구현이며, 디컴파일은 그 동작을 바꾸지 않는다.
 2. HLE는 API 경계(커널 ordinal, XDK 라이브러리 함수)에서 한다. 하드웨어 레지스터 수준 에뮬레이션(NV2A, MCPX APU LLE)은 API 경계로 해결되지 않을 때만 쓴다.
-3. 재사용 가능한 Xbox 런타임(`rexbox`)은 타이틀을 알지 못한다. 타이틀 고유 사항은 타이틀 프로파일과 `src/game/ct3/`에만 둔다. rexbox에 필요한 변경은 rexbox 저장소에서 그 규칙대로 하고, 이 저장소는 submodule을 올린다.
+3. 재사용 가능한 Xbox 런타임(`rexbox`)은 특정 타이틀에 의존하지 않는다. 타이틀 고유 사항은 타이틀 프로파일과 `src/game/ct3/`에만 둔다. rexbox에 필요한 변경은 rexbox 저장소에서 그 규칙대로 하고, 이 저장소는 submodule을 올린다.
 4. Win32 x86을 먼저 완성하고, 이후 Win64, Linux x86/x64, Web, Android로 넓힌다. 처음부터 멀티플랫폼 공용 구조로 설계한다.
 5. 에뮬레이터 소스(xemu, Cxbx-Reloaded)를 통합하지 않는다.
 6. 게임 데이터(XBE, 자산, ISO)와 그것에서 기계적으로 생성한 코드는 저장소에 넣지 않는다.
