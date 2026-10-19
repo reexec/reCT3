@@ -194,10 +194,11 @@ void PrintThreadReport(const rexbox::recomp::ThreadReport& report)
         std::printf("stopped at indirect call to %08X with no target\n", report.target);
         break;
     case StopReason::kFault:
-        std::printf("fault %08X, %s at guest %08X%s (host %p)\n", report.fault_code,
+        std::printf("fault %08X, %s at guest %08X%s (host %p, instruction %p)\n", report.fault_code,
                     report.access_is_write ? "write" : "read", report.guest_access_address,
                     report.access_in_guest_memory ? "" : ", outside guest RAM",
-                    reinterpret_cast<void*>(report.host_access_address));
+                    reinterpret_cast<void*>(report.host_access_address),
+                    reinterpret_cast<void*>(report.host_exception_address));
         break;
     }
     std::printf("     eax %08X ecx %08X edx %08X ebx %08X\n", report.eax, report.ecx, report.edx, report.ebx);
@@ -296,7 +297,12 @@ int main(int argc, char** argv)
     rexbox::platform::SetOverlayBuilder([] { settings_ui.Build(); });
 
     rexbox::runtime::GuestMemory memory;
-    if (!memory.Initialize(rexbox::runtime::GuestMemory::kAddressSpaceSize))
+    // CT3 turns a resource's physical address into a pointer with `| 0x80000000`
+    // (docs/analysis/ct3-xbe-overview.md section 7), so the RAM is mapped again
+    // at the Xbox's physical windows (rexbox design i008).
+    rexbox::runtime::GuestMemory::Options memory_options;
+    memory_options.physical_window = true;
+    if (!memory.Initialize(rexbox::runtime::GuestMemory::kAddressSpaceSize, memory_options))
     {
         std::fprintf(stderr, "error: cannot reserve guest memory\n");
         return 1;
