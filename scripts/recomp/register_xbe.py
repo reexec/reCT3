@@ -8,7 +8,7 @@ src/game/ct3/ct3_profile.cpp (kVariants) and the analysis table for
 docs/analysis/ct3-xbe-overview.md. Nothing from the XBE's code is written
 anywhere; the certificate fields are the build's identity only.
 
-    python scripts/recomp/register_xbe.py                      # roms/Crazy Taxi 3/default.xbe as ct3_jp
+    python scripts/recomp/register_xbe.py                      # roms/default.xbe as ct3_jp
     python scripts/recomp/register_xbe.py --xbe <path> --variant ct3_jp --label "Japan"
     python scripts/recomp/register_xbe.py --dry-run            # print only
 """
@@ -27,7 +27,7 @@ VARIANTS = ROOT / "src" / "game" / "ct3" / "recomp" / "variants.json"
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--xbe", type=pathlib.Path, default=ROOT / "roms" / "Crazy Taxi 3" / "default.xbe")
+    parser.add_argument("--xbe", type=pathlib.Path, default=ROOT / "roms" / "default.xbe")
     parser.add_argument("--variant", default="ct3_jp")
     parser.add_argument("--label", default=None, help="the variant's label (default: keep the file's)")
     parser.add_argument("--dry-run", action="store_true", help="print the identity, write nothing")

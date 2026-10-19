@@ -16,7 +16,7 @@ TITLE = ROOT / "src" / "game" / "ct3"
 
 if __name__ == "__main__":
     sys.exit(find_pointer_targets.run(
-        xbe=ROOT / "roms" / "Crazy Taxi 3" / "default.xbe",
+        xbe=ROOT / "roms" / "default.xbe",
         variant="ct3_jp",
         variants=TITLE / "recomp" / "variants.json",
         dispatch=ROOT / "gen" / "ct3_jp" / "gen" / "recomp_dispatch.c",

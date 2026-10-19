@@ -331,6 +331,13 @@ int main(int argc, char** argv)
                                                  : std::filesystem::current_path() / "hdd";
     rexbox::hle::kernel::InitializeKernel(kernel_config);
     const auto missing_kernel = rexbox::hle::kernel::BindKernelImports(*image, memory, registry);
+    // Each import without an HLE export, by name: a thread that reaches one
+    // stops with its ordinal, and the list says in advance which ones can.
+    for (const auto& ordinal : missing_kernel)
+    {
+        const char* name = rexbox::hle::kernel::KernelExportName(ordinal);
+        std::fprintf(stderr, "[kernel] import %u %s has no HLE export\n", ordinal, name != nullptr ? name : "<unknown>");
+    }
     const size_t title_bindings = rect3::BindTitleHle(*image, registry);
     std::printf("hle: %zu exports, kernel imports %zu/%zu bound, %zu title bindings\n", registry.export_count(),
                 image->kernel_imports().size() - missing_kernel.size(), image->kernel_imports().size(),

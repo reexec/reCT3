@@ -15,14 +15,13 @@ namespace
 
 // Certificate identity of each known build (docs/analysis/ct3-xbe-overview.md).
 //
-// The Japan build is the primary target and is not registered yet: the
-// values below are filled in by scripts/recomp/register_xbe.py from the
-// user's default.xbe (it prints this initializer), together with the MD5 in
-// src/game/ct3/recomp/variants.json. Until then IdentifyXbe matches nothing
-// and the app reports an unsupported build.
+// The Japan build is the primary target (MD5 18a8873932612bb8ad86910ffb5d8cfe,
+// XDK 4531), registered with scripts/recomp/register_xbe.py, which also
+// keeps the MD5 in src/game/ct3/recomp/variants.json. An entry with title id
+// 0 is a placeholder IdentifyXbe skips.
 constexpr std::array<XbeVariant, 1> kVariants = {{
-    // Primary target: the Japan retail build's default.xbe.
-    {"Japan", 0x00000000, 0x00000000, 0x00000000, 0x00000000},
+    // Primary target: the Japan retail build's default.xbe (region 2).
+    {"Japan", 0x53450004, 0x3D1FC5C5, 0x00000002, 0x3D088B87},
 }};
 
 struct XdkInternal

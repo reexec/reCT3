@@ -22,7 +22,7 @@ TITLE = ROOT / "src" / "game" / "ct3"
 
 if __name__ == "__main__":
     sys.exit(regenerate.run(
-        xbe=ROOT / "roms" / "Crazy Taxi 3" / "default.xbe",
+        xbe=ROOT / "roms" / "default.xbe",
         variant="ct3_jp",
         title_dir=TITLE / "recomp",
         override_dirs=[TITLE / "decomp"],

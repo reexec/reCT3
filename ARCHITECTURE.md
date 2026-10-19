@@ -41,7 +41,7 @@ reJSRF의 `rejsrf_decomp_check`·`rejsrf_d3d8_check`에 해당하는 타이틀 �
 
 ```mermaid
 flowchart LR
-    XBE["roms/Crazy Taxi 3/default.xbe"] --> REG["scripts/recomp/register_xbe.py<br/>(once: md5 -> variants.json, certificate -> profile)"]
+    XBE["roms/default.xbe"] --> REG["scripts/recomp/register_xbe.py<br/>(once: md5 -> variants.json, certificate -> profile)"]
     XBE --> REGEN["scripts/recomp/regenerate.py (wrapper)"]
     CFG["src/game/ct3/recomp/*.json"] --> REGEN
     DECOMP["src/game/ct3/decomp/*.c"] --> REGEN

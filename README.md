@@ -2,7 +2,7 @@
 
 Xbox 게임 **Crazy Taxi 3: High Roller**(일본판)를 정적 재컴파일과 디컴파일로 Win32, Win64, Linux x86, Linux x64, Web, Android에 네이티브 포팅하는 프로젝트입니다. Xbox 커널·XDK·하드웨어를 대신하는 런타임은 [reJSRF](https://github.com/nworkers/reJSRF)와 공유하는 [rexbox](https://github.com/reexec/rexbox)입니다.
 
-> **준비 단계입니다.** 규칙, 레이어, 공유 런타임, 빌드와 CI가 갖춰졌고 게임 XBE는 아직 등록되지 않았습니다. 일본판 `default.xbe`를 `roms/Crazy Taxi 3/`에 두고 `scripts/recomp/register_xbe.py`로 등록하면 분석과 재컴파일이 시작됩니다.
+> **준비 단계입니다.** 규칙, 레이어, 공유 런타임, 빌드와 CI가 갖춰졌고 게임 XBE는 아직 등록되지 않았습니다. 일본판 `default.xbe`를 `roms/`에 두고 `scripts/recomp/register_xbe.py`로 등록하면 분석과 재컴파일이 시작됩니다.
 
 ## 게임 데이터는 포함되지 않습니다
 
@@ -30,7 +30,7 @@ flowchart TD
 git clone --recurse-submodules https://github.com/reexec/reCT3.git
 cd reCT3
 .\scripts\build_win32_x86.ps1          # 실행 정책이 막으면 scripts\build_win32_x86.bat
-.\build\win32_x86\src\app\Debug\rect3.exe "roms\Crazy Taxi 3"
+.\build\win32_x86\src\app\Debug\rect3.exe roms
 ```
 
 인자는 디스크에서 추출한 **게임 디렉터리**입니다. 앱은 그 폴더를 게임의 `D:`로 쓰고 `default.xbe`를 읽어 인증서로 식별합니다(`--xbe <파일>`로 다른 XBE). 등록된 일본판이면 실행하고, 아니면 멈춥니다.
@@ -65,7 +65,7 @@ cd reCT3
 
 A native port of the Xbox game **Crazy Taxi 3: High Roller** (the Japan build) to Win32, Win64, Linux x86, Linux x64, the web and Android through static recompilation and decompilation. The runtime that stands in for the Xbox kernel, the XDK and the hardware is [rexbox](https://github.com/reexec/rexbox), shared with [reJSRF](https://github.com/nworkers/reJSRF).
 
-> **Preparation stage.** The rules, layers, shared runtime, build and CI are in place; the game XBE is not registered yet. Put the Japan `default.xbe` under `roms/Crazy Taxi 3/` and register it with `scripts/recomp/register_xbe.py` to start analysis and recompilation.
+> **Preparation stage.** The rules, layers, shared runtime, build and CI are in place; the game XBE is not registered yet. Put the Japan `default.xbe` under `roms/` and register it with `scripts/recomp/register_xbe.py` to start analysis and recompilation.
 
 ## No game data included
 
