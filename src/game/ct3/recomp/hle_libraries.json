@@ -1,0 +1,21 @@
+{
+  "comment": "XDK functions replaced by HLE exports. 'libraries' selects every identified function of a library; 'functions' selects single functions of libraries whose other functions stay lifted. regenerate.py generates an override for each (rexbox: include/rexbox/recomp/recomp_hle_entry.h). Initial choice before the XBE is analyzed (docs/design/20261020-i001-project-bootstrap.md section 5): every D3D8 and DSOUND function goes to the HLE, so an unimplemented one stops the run and names itself instead of running lifted hardware code; XAPI's device and input functions are the same set reJSRF uses.",
+  "libraries": [
+    "D3D8",
+    "D3D8LTCG",
+    "DSOUND"
+  ],
+  "functions": [
+    {"library": "XAPILIB", "name": "XInitDevices"},
+    {"library": "XAPILIB", "name": "XGetDeviceChanges"},
+    {"library": "XAPILIB", "name": "XGetDevices"},
+    {"library": "XAPILIB", "name": "XInputOpen"},
+    {"library": "XAPILIB", "name": "XInputClose"},
+    {"library": "XAPILIB", "name": "XInputGetCapabilities"},
+    {"library": "XAPILIB", "name": "XInputGetState"},
+    {"library": "XAPILIB", "name": "XInputSetState"},
+    {"library": "XAPILIB", "name": "XInputPoll"},
+    {"library": "XAPILIB", "name": "XMountMUA"},
+    {"library": "XAPILIB", "name": "XUnmountMU"}
+  ]
+}

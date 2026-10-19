@@ -1,0 +1,5 @@
+{
+  "comment": "XDK functions XbSymbolDatabase does not identify in this build. Empty until the Japan XBE is analyzed (docs/analysis/ct3-xbe-overview.md).",
+  "symbols": [
+  ]
+}

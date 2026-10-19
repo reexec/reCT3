@@ -1,0 +1,53 @@
+cmake_minimum_required(VERSION 3.20)
+
+project(reCT3 LANGUAGES C CXX)
+
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/VERSION"
+)
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" RECT3_VERSION LIMIT_COUNT 1)
+string(STRIP "${RECT3_VERSION}" RECT3_VERSION)
+if(NOT RECT3_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR "VERSION must use major.minor.patch format")
+endif()
+message(STATUS "reCT3 version ${RECT3_VERSION}")
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
+# The shared Xbox runtime (third_party/rexbox, submodule): platform layer,
+# XBE, runtime, lifter ABI adapter, HLE modules, tools and probes. Its
+# consumer contract is in its ARCHITECTURE.md section 2.
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/rexbox/CMakeLists.txt")
+    message(FATAL_ERROR "third_party/rexbox is missing; run: git submodule update --init --recursive")
+endif()
+# The lifter: this project pins upstream xboxrecomp itself (third_party/xboxrecomp),
+# so the generated code and rexbox_recomp compile against that checkout's ABI header.
+set(REXBOX_XBOXRECOMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/xboxrecomp" CACHE PATH
+    "xboxrecomp checkout whose lifter ABI header rexbox_recomp compiles against")
+if(NOT EXISTS "${REXBOX_XBOXRECOMP_DIR}/templates/runtime/recomp_types.h")
+    message(FATAL_ERROR "third_party/xboxrecomp is missing; run: git submodule update --init --recursive")
+endif()
+# rexbox_xdk_symbols (for scripts/recomp/regenerate.py) and the probes (CI).
+set(REXBOX_BUILD_TOOLS ON CACHE BOOL "Build rexbox_xdk_symbols and the HLE probes")
+add_subdirectory(third_party/rexbox)
+# The compiler settings every target of the program shares (/EHa above all).
+rexbox_apply_host_flags()
+message(STATUS "reCT3 platform: ${REXBOX_PLATFORM}/${REXBOX_ARCH}")
+
+# Lifted C for the primary variant, produced by scripts/recomp/regenerate.py.
+# Without it the game links no recompiled code and the app stops after load.
+set(RECT3_RECOMP_GEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gen/ct3_jp/gen" CACHE PATH
+    "Directory of generated recompiled C (recomp_dispatch.c and friends)")
+
+# Layers above rexbox. Each links only the layers below it.
+add_subdirectory(src/game/ct3)       # rect3_game: CT3 title code + profile
+add_subdirectory(src/app)            # rect3: the executable
+
+foreach(target IN ITEMS rect3_game rect3)
+    rexbox_check_license(${target})
+    rexbox_strict_warnings(${target})
+endforeach()
