@@ -11,6 +11,13 @@ add_custom_target(rect3_build_stamp
     VERBATIM)
 add_dependencies(rect3 rect3_build_stamp)
 target_include_directories(rect3 PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+# Smoke checks that need no game data: the app refuses a file and a directory
+# without an XBE with the expected message (its exit code is 1 in both cases).
+add_test(NAME rect3_rejects_file COMMAND rect3 "${PROJECT_SOURCE_DIR}/LICENSE")
+set_tests_properties(rect3_rejects_file PROPERTIES PASS_REGULAR_EXPRESSION "is not a directory")
+add_test(NAME rect3_rejects_directory_without_xbe COMMAND rect3 "${PROJECT_SOURCE_DIR}/docs")
+set_tests_properties(rect3_rejects_directory_without_xbe PROPERTIES PASS_REGULAR_EXPRESSION "has no default.xbe")
+
 if(MSVC)
     # Guest threads get their 64 MiB host stacks explicitly (CreateHostThread);
     # the image default stays small because every other thread in the process

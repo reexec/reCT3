@@ -1,9 +1,11 @@
 name: CI
 
-# The fast gate: a broken build is found on the branch rather than after the
-# merge. No game data exists in CI, so there is no generated code either: this
-# builds the no-recompiled-code configuration and stops. Anything that needs an
-# XBE is verified locally (docs/guides/).
+# The fast gate (docs/design/20261020-i002-github-actions.md): every push to
+# main and every pull request configures the project, builds it and runs the
+# tests through CTest (the rexbox probes and the app's smoke checks). No game
+# data exists in CI, so there is no generated code either: this builds the
+# no-recompiled-code configuration. Anything that needs an XBE is verified
+# locally (docs/guides/).
 on:
   push:
     branches: [main]
@@ -21,7 +23,7 @@ concurrency:
 
 jobs:
   win32:
-    name: Win32 x86 build
+    name: Win32 x86 build and tests
     # Pinned rather than windows-latest: build_win32_x86.ps1 picks its
     # generator from the installed Visual Studio, so a floating image would
     # silently change the toolchain.
@@ -43,23 +45,6 @@ jobs:
         shell: powershell
         run: .\scripts\build_win32_x86.ps1 -Configuration ${{ matrix.configuration }}
 
-      - name: Probe - kernel HLE
+      - name: Tests (CTest)
         shell: powershell
-        run: .\build\win32_x86\third_party\rexbox\tools\${{ matrix.configuration }}\rexbox_kernel_probe.exe
-
-      - name: Probe - DSOUND HLE
-        shell: powershell
-        run: .\build\win32_x86\third_party\rexbox\tools\${{ matrix.configuration }}\rexbox_dsound_probe.exe
-
-      - name: Probe - D3D8 HLE
-        shell: powershell
-        run: .\build\win32_x86\third_party\rexbox\tools\${{ matrix.configuration }}\rexbox_d3d8_probe.exe
-
-      - name: Smoke - app rejects a file and a directory without an XBE
-        shell: powershell
-        run: |
-          & .\build\win32_x86\src\app\${{ matrix.configuration }}\rect3.exe LICENSE
-          if ($LASTEXITCODE -ne 1) { throw "file: expected exit code 1, got $LASTEXITCODE" }
-          & .\build\win32_x86\src\app\${{ matrix.configuration }}\rect3.exe docs
-          if ($LASTEXITCODE -ne 1) { throw "directory: expected exit code 1, got $LASTEXITCODE" }
-          exit 0
+        run: ctest --test-dir build\win32_x86 -C ${{ matrix.configuration }} --output-on-failure

@@ -43,6 +43,11 @@ message(STATUS "reCT3 platform: ${REXBOX_PLATFORM}/${REXBOX_ARCH}")
 set(RECT3_RECOMP_GEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gen/ct3_jp/gen" CACHE PATH
     "Directory of generated recompiled C (recomp_dispatch.c and friends)")
 
+# Tests: rexbox's probes (registered by the submodule) and the app's smoke
+# checks (src/app); `ctest -C <config>` runs them from the build tree, and CI
+# runs them on every push (docs/design/20261020-i002-github-actions.md).
+enable_testing()
+
 # Layers above rexbox. Each links only the layers below it.
 add_subdirectory(src/game/ct3)       # rect3_game: CT3 title code + profile
 add_subdirectory(src/app)            # rect3: the executable
