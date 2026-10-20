@@ -7,7 +7,7 @@
 1. 사용자 보고(도로와 건물이 없음)를 재현했다. 데모 frame 1500, 2500에 차, 그림자, 하늘, 바다만 그려진다.
 2. `REXBOX_TRACE_FILES`: 타이틀은 `D:\Media\bank10.mdl`을 읽어 `Z:\tmp`에 쓰고, XAPI `MoveFileEx`(`sub_000DFEB1`)로 `Z:\_bank10.mdl`로 바꾼 뒤 연다. rexbox가 class 10을 지원하지 않아 열기가 `C0000034`로 실패했다.
 3. 원본을 손으로 `_bank10.mdl`에 복사해 본 실행은 지형 일부만 그렸다. 캐시 파일은 원본의 복사가 아니기 때문이다(아래).
-4. rexbox #14에 이름 바꾸기를 넣고 submodule을 작업 브랜치 커밋 `c0bb5a2`로 올렸다(머지 전 임시 고정).
+4. rexbox #14에 이름 바꾸기를 넣고 submodule을 작업 브랜치 커밋 `c0bb5a2`로 올렸고, 머지 뒤 rexbox v0.0.5(`b22db2c`)에 고정했다.
 
 ## 검증
 
@@ -28,7 +28,7 @@
 
 Work order: [20261021-i009-cache-rename](../work-orders/20261021-i009-cache-rename.md) · rexbox: issue #14, [work log](../../third_party/rexbox/docs/work-logs/20261021-i014-file-rename.md)
 
-Done: the user's report (no roads or buildings) was reproduced; demo frames 1500 and 2500 show only cars, shadows, sky and sea. `REXBOX_TRACE_FILES` shows the title reading `D:\Media\bank10.mdl`, writing `Z:\tmp`, renaming it to `Z:\_bank10.mdl` with XAPI `MoveFileEx` (`sub_000DFEB1`) and opening it; rexbox did not support class 10, so the open failed with `C0000034`. A run with the disc file copied by hand to `_bank10.mdl` drew only part of the geometry, because the cache file is not a copy of it (below). Rename went into rexbox #14, and the submodule moved to that task-branch commit `c0bb5a2` (a temporary pin until the merge).
+Done: the user's report (no roads or buildings) was reproduced; demo frames 1500 and 2500 show only cars, shadows, sky and sea. `REXBOX_TRACE_FILES` shows the title reading `D:\Media\bank10.mdl`, writing `Z:\tmp`, renaming it to `Z:\_bank10.mdl` with XAPI `MoveFileEx` (`sub_000DFEB1`) and opening it; rexbox did not support class 10, so the open failed with `C0000034`. A run with the disc file copied by hand to `_bank10.mdl` drew only part of the geometry, because the cache file is not a copy of it (below). Rename went into rexbox #14, and the submodule moved to that task-branch commit `c0bb5a2`, then was pinned to the merged rexbox v0.0.5 (`b22db2c`).
 
 Verification: Win32 x86 Release with no errors, CTest 5/5 (rexbox kernel probe, 94 checks). `rect3.exe roms` (hidden, 100 s, with `_bank10.mdl` and `tmp` removed from `hdd/Partition5`) logs `rename ...\Partition5\tmp -> \??\Z:\_bank10.mdl -> 00000000`, the open after it succeeds, and frame 1500 draws an indoor car park (floor, ceiling lights, walls, pillars). The cache file is 13,115,392 bytes and differs from the first byte from the disc's `bank10.mdl` (15,849,024 bytes): the title processes it on the way.
 
