@@ -32,9 +32,12 @@ struct XdkInternal
 
 // XDK internals XbSymbolDatabase does not name, found by reading the lifted
 // library. The D3D8 HLE device runs "D3D_InitializeDeviceState" (the device's
-// default-state routine) when the profile binds it; its address in this
-// title is unknown until the XBE is analyzed (docs/analysis/ct3-xbe-overview.md).
-constexpr std::array<XdkInternal, 0> kXdkInternals = {{}};
+// default-state routine): the routine Direct3D_CreateDevice reaches through
+// 0x000FB140 that sets the identity transforms and the render and
+// texture-stage defaults (docs/analysis/ct3-xbe-overview.md section 4).
+constexpr std::array<XdkInternal, 1> kXdkInternals = {{
+    {"D3D_InitializeDeviceState", 0x000FAA20},
+}};
 
 bool Registered(const XbeVariant& variant)
 {
