@@ -1,5 +1,6 @@
 {
-  "comment": "XDK functions XbSymbolDatabase does not identify in this build. Empty until the Japan XBE is analyzed (docs/analysis/ct3-xbe-overview.md).",
+  "comment": "XDK functions XbSymbolDatabase does not identify in this build, named by reading the lifted library (docs/analysis/ct3-xbe-overview.md section 4). D3DDevice_SetVertexBlendModelView(Count, pModelViews, pInverseModelViews, pProjectionViewport), stdcall 16 bytes: Count 0 only sets dirty bit 0x200; otherwise it pushes NV2A 0x0480 + 0x40 x i (model views), 0x0580 (inverse model views), 0x0680 (projection-viewport) and keeps copies at device +0x4B0 and +0x5B0.",
   "symbols": [
+    {"library": "D3D8", "name": "D3DDevice_SetVertexBlendModelView", "address": "0x000F61E0", "kind": "function"}
   ]
 }
