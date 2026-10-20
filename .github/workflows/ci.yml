@@ -1,0 +1,50 @@
+name: CI
+
+# The fast gate (docs/design/20261020-i002-github-actions.md): every push to
+# main and every pull request configures the project, builds it and runs the
+# tests through CTest (the rexbox probes and the app's smoke checks). No game
+# data exists in CI, so there is no generated code either: this builds the
+# no-recompiled-code configuration. Anything that needs an XBE is verified
+# locally (docs/guides/).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Run by hand on a task branch (gh workflow run ci.yml --ref <branch>) to
+  # check a CI change before any pull request exists.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  win32:
+    name: Win32 x86 build and tests
+    # Pinned rather than windows-latest: build_win32_x86.ps1 picks its
+    # generator from the installed Visual Studio, so a floating image would
+    # silently change the toolchain.
+    runs-on: windows-2022
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          # rexbox and its own submodules, and the xboxrecomp pin whose ABI
+          # header rexbox_recomp compiles against.
+          submodules: recursive
+
+      - name: Build
+        shell: powershell
+        run: .\scripts\build_win32_x86.ps1 -Configuration ${{ matrix.configuration }}
+
+      - name: Tests (CTest)
+        shell: powershell
+        run: ctest --test-dir build\win32_x86 -C ${{ matrix.configuration }} --output-on-failure

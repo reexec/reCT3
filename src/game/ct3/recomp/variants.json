@@ -1,0 +1,9 @@
+{
+  "comment": "The XBE each generated variant is lifted from, checked by regenerate.py and find_pointer_targets.py before they read it. Seeds and title bindings hold addresses of this exact build, so another build would generate code that does not match them (docs/analysis/ct3-xbe-overview.md). An md5 of null means the build is not registered yet: scripts/recomp/register_xbe.py fills it from the user's default.xbe.",
+  "variants": {
+    "ct3_jp": {
+      "label": "Japan",
+      "md5": "18a8873932612bb8ad86910ffb5d8cfe"
+    }
+  }
+}

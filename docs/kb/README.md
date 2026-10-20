@@ -1,0 +1,9 @@
+# reCT3 기술 지식 기반 색인
+
+일반 Xbox 지식(XBE 형식, 정적 재컴파일과 HLE, 커널 구조, D3D8·DSOUND·XInput API, 외부 참조 프로젝트)은 공유 런타임의 [rexbox `docs/kb/`](../../third_party/rexbox/docs/kb/README.md)에 있다. 여기에는 이 타이틀의 이해에만 필요한 주제를 둔다. 아직 없다(게임의 미들웨어와 자산 형식은 XBE·디스크를 읽은 뒤 추가).
+
+---
+
+# reCT3 Knowledge Base Index
+
+General Xbox knowledge (the XBE format, static recompilation and HLE, kernel structures, the D3D8, DSOUND and XInput APIs, external reference projects) lives in the shared runtime's [rexbox `docs/kb/`](../../third_party/rexbox/docs/kb/README.md). Only topics this title alone needs go here. None yet (the game's middleware and asset formats come after the XBE and the disc are read).
