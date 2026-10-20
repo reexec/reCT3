@@ -94,13 +94,19 @@ sequenceDiagram
     T->>D: XInitDevices, CreateVertexShader x N, CreateTexture 512x256
     T->>T: Data | 0x80000000 -> NtReadFile into the texture (rexbox #8: the physical window)
     T->>D: DirectSoundCreate, XAudioDownloadEffectsImage, SetMixBinHeadroom (rexbox #9)
+    T->>K: PsCreateSystemThreadEx x 5 (routine 000DDF9D: workers 000B3110, 000B3180)
+    T->>D: GetProjectionViewportMatrix (rexbox #7), then SetVertexShaderInput (unimplemented)
 ```
 
 * **확인됨**: `0x4D014`는 `IOCTL_SCSI_PASS_THROUGH`이며 CDB `5A 00 3E 00 00 00 00 00 1C 00`(MODE SENSE(10) 페이지 0x3E). 답의 바이트 11이 1이고 10 또는 12가 0이 아니어야 계속한다(`sub_000E412D`). → [rexbox kb: xbox-dvd-drive](../../third_party/rexbox/docs/kb/xbox-dvd-drive.md)
 * **확인됨**: 타이틀 코드는 D3D 리소스의 `Data`에 `0x80000000`을 OR해 CPU 포인터로 쓴다(`sub_000ABAA0`: `ecx = MEM32(eax + 4) | 0x80000000`, 30곳; `0xF0000000` 11곳). → [rexbox kb: xbox-memory-map](../../third_party/rexbox/docs/kb/xbox-memory-map.md)
 * **확인됨**: D3D8 내부 `Get2DSurfaceDesc`는 식별되지 않은 공개 함수가 lift된 채 부른다. 순수 함수이므로 `hle_libraries.json`의 `lifted`로 둔다.
 * **확인됨**: lifter가 4886개 함수를 옮겼고, 미해결 스텁 4개, 미구현 명령 22개(`insb`/`outsb`/`hlt`/`cli`/`int`/`wbinvd`/`arpl`/`daa`: 커널·보안 라이브러리 코드로 **추정**).
-* **미확정**: DSOUND 4531 함수들 다음의 frontier.
+* **확인됨**: DSOUND `DirectSoundEnterCriticalSection`(`001057C2`)은 `FS:[0x24]`(KPCR IRQL)가 0일 때만 `RtlEnterCriticalSection(0x122908)`(thunk `0x12A264`, 커널 277)을 부르고 1을, 아니면 0을 돌려준다. 게스트 데이터만 쓰므로 `lifted`로 둔다.
+* **확인됨**: `000B3110`, `000B3180`은 즉시값(`000B3309`, `000B3341`)으로만 전달되어 lifter가 놓친 함수이며, 스레드 루틴 `000DDF9D`가 간접 호출한다. `find_pointer_targets.py --write`로 이런 후보 29개를 `seed_pointer_targets.json`에 두자 4,929개 함수가 lift되었다.
+* **확인됨**: 그 다음 frontier는 `D3DDevice_GetProjectionViewportMatrix`(`000F4F80`) → `D3DDevice_SetVertexShaderInput`(`000F7170`, stdcall 3인자)이다.
+* **미확정**: `SetVertexShaderInput` 다음의 frontier와, 타이틀이 투영-뷰포트 행렬로 무엇을 계산하는지(화면 좌표의 z 배율).
 
 * **Confirmed**: `0x4D014` is `IOCTL_SCSI_PASS_THROUGH` with CDB `5A 00 3E 00 00 00 00 00 1C 00` (MODE SENSE(10) page 0x3E); byte 11 of the answer must be 1 and byte 10 or 12 non-zero (`sub_000E412D`); the title turns a resource's `Data` into a pointer with `| 0x80000000` (`sub_000ABAA0`; 30 places, 11 with `0xF0000000`); D3D8's internal `Get2DSurfaceDesc` is reached from an unidentified public function running lifted and stays lifted (pure); the lifter moved 4,886 functions with 4 unresolved stubs and 22 unimplemented instructions (`insb`/`outsb`/`hlt`/`cli`/`int`/`wbinvd`/`arpl`/`daa`, **inferred** to be kernel-mode or security library code).
-* **Unresolved**: the frontier after the DSOUND 4531 functions.
+* **Confirmed**: DSOUND's `DirectSoundEnterCriticalSection` (`001057C2`) calls `RtlEnterCriticalSection(0x122908)` (thunk `0x12A264`, kernel 277) and returns 1 only when `FS:[0x24]` (the KPCR IRQL) is 0, else returns 0; it touches only guest data and stays lifted. `000B3110` and `000B3180` are passed only as immediates (`000B3309`, `000B3341`), so the lifter missed them; the thread routine `000DDF9D` calls them indirectly. With the 29 such candidates written to `seed_pointer_targets.json` by `find_pointer_targets.py --write`, 4,929 functions are lifted. The next frontiers are `D3DDevice_GetProjectionViewportMatrix` (`000F4F80`), then `D3DDevice_SetVertexShaderInput` (`000F7170`, stdcall, 3 arguments).
+* **Unresolved**: the frontier after `SetVertexShaderInput`, and what the title computes with the projection-viewport matrix (the z scale of its screen coordinates).
