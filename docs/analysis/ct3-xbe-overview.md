@@ -96,7 +96,9 @@ sequenceDiagram
     T->>D: DirectSoundCreate, XAudioDownloadEffectsImage, SetMixBinHeadroom (rexbox #9)
     T->>K: PsCreateSystemThreadEx x 5 (routine 000DDF9D: workers 000B3110, 000B3180)
     T->>D: GetProjectionViewportMatrix, SetVertexShaderInput, first Swap, SetModelView (rexbox #7)
-    T->>D: BeginPush_4 (unimplemented: the title writes NV2A methods itself)
+    T->>D: BeginPush_4 / EndPush: SET_BEGIN_END + INLINE_ARRAY strips (rexbox #7)
+    T->>D: DirectSoundCreateBuffer x 135 (rexbox #9)
+    T->>K: thread 9, KeWaitForMultipleObjects, KeSetTimerEx (timers do not fire yet)
 ```
 
 * **확인됨**: `0x4D014`는 `IOCTL_SCSI_PASS_THROUGH`이며 CDB `5A 00 3E 00 00 00 00 00 1C 00`(MODE SENSE(10) 페이지 0x3E). 답의 바이트 11이 1이고 10 또는 12가 0이 아니어야 계속한다(`sub_000E412D`). → [rexbox kb: xbox-dvd-drive](../../third_party/rexbox/docs/kb/xbox-dvd-drive.md)
@@ -108,9 +110,12 @@ sequenceDiagram
 * **확인됨**: 그 다음 frontier는 `D3DDevice_GetProjectionViewportMatrix`(`000F4F80`) → `D3DDevice_SetVertexShaderInput`(`000F7170`, stdcall 3인자)이다.
 * **확인됨**: 타이틀은 `SetModelView`의 composite를 `GetProjectionViewportMatrix`의 결과로 만든다(rexbox 실행에서 모델뷰 × 투영 × 뷰포트와 차이 0, composite 행 3 = (320, 240, 0.1, 1)).
 * **확인됨**: `BeginPush_4`(`000F81F0`) 호출 지점 5곳(`000A44D2`, `000A8799`, `000A88F9`, `000A8A63`, `000A8BEE`). 첫 지점은 NV2A 헤더 `0x000417FC`(메서드 `0x17FC` `SET_BEGIN_END`, 1개)에 primitive를 쓰고 정점 DWORD를 `rep movsd`/MMX로 복사한다.
-* **미확정**: `BeginPush` 다음의 frontier와, 나머지 호출 지점이 쓰는 NV2A 메서드 집합, 실기 화면 좌표의 z 배율.
+* **확인됨**: 실행에서 푸시 버퍼는 `SET_BEGIN_END`와 `INLINE_ARRAY`만 썼다(모르는 메서드 보고 없음). 그린 것은 `FVF 000001C4`(XYZRHW·diffuse·specular·tex1, stride 32) strip이다.
+* **추정**: 스레드 9는 타이머를 포함한 여러 객체를 `KeWaitForMultipleObjects`로 기다린다. 타이머가 발화하지 않으면 멈출 것이다.
+* **미확정**: `KeSetTimerEx` 다음의 frontier와 실기 화면 좌표의 z 배율.
 
 * **Confirmed**: `0x4D014` is `IOCTL_SCSI_PASS_THROUGH` with CDB `5A 00 3E 00 00 00 00 00 1C 00` (MODE SENSE(10) page 0x3E); byte 11 of the answer must be 1 and byte 10 or 12 non-zero (`sub_000E412D`); the title turns a resource's `Data` into a pointer with `| 0x80000000` (`sub_000ABAA0`; 30 places, 11 with `0xF0000000`); D3D8's internal `Get2DSurfaceDesc` is reached from an unidentified public function running lifted and stays lifted (pure); the lifter moved 4,886 functions with 4 unresolved stubs and 22 unimplemented instructions (`insb`/`outsb`/`hlt`/`cli`/`int`/`wbinvd`/`arpl`/`daa`, **inferred** to be kernel-mode or security library code).
 * **Confirmed**: DSOUND's `DirectSoundEnterCriticalSection` (`001057C2`) calls `RtlEnterCriticalSection(0x122908)` (thunk `0x12A264`, kernel 277) and returns 1 only when `FS:[0x24]` (the KPCR IRQL) is 0, else returns 0; it touches only guest data and stays lifted. `000B3110` and `000B3180` are passed only as immediates (`000B3309`, `000B3341`), so the lifter missed them; the thread routine `000DDF9D` calls them indirectly. With the 29 such candidates written to `seed_pointer_targets.json` by `find_pointer_targets.py --write`, 4,929 functions are lifted. The next frontiers are `D3DDevice_GetProjectionViewportMatrix` (`000F4F80`), then `D3DDevice_SetVertexShaderInput` (`000F7170`, stdcall, 3 arguments).
 * **Confirmed**: the title builds `SetModelView`'s composite from `GetProjectionViewportMatrix` (on rexbox it equals model view x projection x viewport with difference 0; composite row 3 = (320, 240, 0.1, 1)). `BeginPush_4` (`000F81F0`) has five call sites (`000A44D2`, `000A8799`, `000A88F9`, `000A8A63`, `000A8BEE`); the first writes NV2A header `0x000417FC` (method `0x17FC`, `SET_BEGIN_END`, one value) with the primitive, then copies vertex DWORDs with `rep movsd`/MMX.
-* **Unresolved**: the frontier after `BeginPush`, the NV2A methods the other call sites write, and the hardware's z scale of screen coordinates.
+* **Confirmed**: at run time the push buffers used only `SET_BEGIN_END` and `INLINE_ARRAY` (no unknown-method reports), drawing `FVF 000001C4` (XYZRHW, diffuse, specular, tex1; stride 32) strips. **Inferred**: thread 9 waits with `KeWaitForMultipleObjects` on objects including a timer, and would hang while timers do not fire.
+* **Unresolved**: the frontier after `KeSetTimerEx`, and the hardware's z scale of screen coordinates.
