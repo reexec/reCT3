@@ -35,8 +35,11 @@ struct XdkInternal
 // default-state routine): the routine Direct3D_CreateDevice reaches through
 // 0x000FB140 that sets the identity transforms and the render and
 // texture-stage defaults (docs/analysis/ct3-xbe-overview.md section 4).
-constexpr std::array<XdkInternal, 1> kXdkInternals = {{
+// "D3D_g_Stream" is the per-stream {Stride, Offset, VertexBuffer} array that
+// CDevice_SetStateVB (0x000FE4D0) reads at 0x00104ED8 + stream * 12.
+constexpr std::array<XdkInternal, 2> kXdkInternals = {{
     {"D3D_InitializeDeviceState", 0x000FAA20},
+    {"D3D_g_Stream", 0x00104ED8},
 }};
 
 bool Registered(const XbeVariant& variant)
