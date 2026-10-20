@@ -27,5 +27,7 @@
   {"start": "0x000C06E0", "note": "pointer-only target (.data 002108AC)"},
   {"start": "0x000C0710", "note": "pointer-only target (.data 002108B0)"},
   {"start": "0x000C0740", "note": "pointer-only target (.data 002108B4)"},
-  {"start": "0x000C0770", "note": "pointer-only target (.data 002108B8)"}
+  {"start": "0x000C0770", "note": "pointer-only target (.data 002108B8)"},
+  {"start": "0x000E9C7C", "note": "CRT fmod operand-class table entry, reached by jmp [ebx] in sub_000E9BDF (.data 002148B0)"},
+  {"start": "0x000E9D1E", "note": "CRT fmod operand-class table entry, reached by jmp [ebx] in sub_000E9BDF (.data 002148A4)"}
 ]
