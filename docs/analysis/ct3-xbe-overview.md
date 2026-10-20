@@ -99,7 +99,8 @@ sequenceDiagram
     T->>D: BeginPush_4 / EndPush: SET_BEGIN_END + INLINE_ARRAY strips (rexbox #7)
     T->>D: DirectSoundCreateBuffer x 135 (rexbox #9)
     T->>K: thread 9, KeWaitForMultipleObjects, KeSetTimerEx (rexbox #12: timers fire)
-    T->>D: about 94 frames at 30 fps, then IDirectSoundBuffer_SetFormat on thread 4 (unimplemented)
+    T->>D: IDirectSoundBuffer_SetFormat, SetPitch ... (rexbox #9); hundreds of black frames
+    T->>D: D3DDevice_CreatePalette on thread 10 (unimplemented)
 ```
 
 * **확인됨**: `0x4D014`는 `IOCTL_SCSI_PASS_THROUGH`이며 CDB `5A 00 3E 00 00 00 00 00 1C 00`(MODE SENSE(10) 페이지 0x3E). 답의 바이트 11이 1이고 10 또는 12가 0이 아니어야 계속한다(`sub_000E412D`). → [rexbox kb: xbox-dvd-drive](../../third_party/rexbox/docs/kb/xbox-dvd-drive.md)
@@ -113,12 +114,13 @@ sequenceDiagram
 * **확인됨**: `BeginPush_4`(`000F81F0`) 호출 지점 5곳(`000A44D2`, `000A8799`, `000A88F9`, `000A8A63`, `000A8BEE`). 첫 지점은 NV2A 헤더 `0x000417FC`(메서드 `0x17FC` `SET_BEGIN_END`, 1개)에 primitive를 쓰고 정점 DWORD를 `rep movsd`/MMX로 복사한다.
 * **확인됨**: 실행에서 푸시 버퍼는 `SET_BEGIN_END`와 `INLINE_ARRAY`만 썼다(모르는 메서드 보고 없음). 그린 것은 `FVF 000001C4`(XYZRHW·diffuse·specular·tex1, stride 32) strip이다.
 * **추정**: 스레드 9는 타이머를 포함한 여러 객체를 `KeWaitForMultipleObjects`로 기다린다. 타이머가 발화하지 않으면 멈출 것이다.
-* **확인됨**: 타이머가 발화하자(rexbox #12) 대기가 풀려 프레임 루프가 30 fps 간격으로 돈다. 그 뒤 스레드 4가 `IDirectSoundBuffer_SetFormat`(`0010712B`)에서 멈춘다.
+* **확인됨**: 타이머가 발화하자(rexbox #12) 대기가 풀려 프레임 루프가 30 fps 간격으로 돈다. 그 뒤 스레드 4가 `IDirectSoundBuffer_SetFormat`(`0010712B`)에서 멈췄고, 그것을 더하자(rexbox #9) 프레임 루프가 60초 동안 정체 없이 돌다가 스레드 10이 `D3DDevice_CreatePalette`(`000F93A0`)에서 멈춘다. 그 사이 프레임은 모두 검다.
+* **확인됨**: `XAudioCalculatePitch`(`0010587A`)는 `round(4096 × log2(f / 48000))`(0 Hz는 0)이다. 도우미 `sub_00109E9D`가 `fyl2x`와 `fistp`를 쓰고, 상수는 `0x1BA5F0` = 1/48000, `0x17DDC0` = 2^32(음수 DWORD 보정)이다.
 * **미확정**: DPC 루틴 `000E0A69`가 언제 큐에 들어가는지(지금까지의 실행에서는 그 전에 멈춘다)와 실기 화면 좌표의 z 배율.
 
 * **Confirmed**: `0x4D014` is `IOCTL_SCSI_PASS_THROUGH` with CDB `5A 00 3E 00 00 00 00 00 1C 00` (MODE SENSE(10) page 0x3E); byte 11 of the answer must be 1 and byte 10 or 12 non-zero (`sub_000E412D`); the title turns a resource's `Data` into a pointer with `| 0x80000000` (`sub_000ABAA0`; 30 places, 11 with `0xF0000000`); D3D8's internal `Get2DSurfaceDesc` is reached from an unidentified public function running lifted and stays lifted (pure); the lifter moved 4,886 functions with 4 unresolved stubs and 22 unimplemented instructions (`insb`/`outsb`/`hlt`/`cli`/`int`/`wbinvd`/`arpl`/`daa`, **inferred** to be kernel-mode or security library code).
 * **Confirmed**: DSOUND's `DirectSoundEnterCriticalSection` (`001057C2`) calls `RtlEnterCriticalSection(0x122908)` (thunk `0x12A264`, kernel 277) and returns 1 only when `FS:[0x24]` (the KPCR IRQL) is 0, else returns 0; it touches only guest data and stays lifted. `000B3110` and `000B3180` are passed only as immediates (`000B3309`, `000B3341`), so the lifter missed them; the thread routine `000DDF9D` calls them indirectly. With the 29 such candidates written to `seed_pointer_targets.json` by `find_pointer_targets.py --write`, 4,929 functions are lifted. The next frontiers are `D3DDevice_GetProjectionViewportMatrix` (`000F4F80`), then `D3DDevice_SetVertexShaderInput` (`000F7170`, stdcall, 3 arguments).
 * **Confirmed**: the title builds `SetModelView`'s composite from `GetProjectionViewportMatrix` (on rexbox it equals model view x projection x viewport with difference 0; composite row 3 = (320, 240, 0.1, 1)). `BeginPush_4` (`000F81F0`) has five call sites (`000A44D2`, `000A8799`, `000A88F9`, `000A8A63`, `000A8BEE`); the first writes NV2A header `0x000417FC` (method `0x17FC`, `SET_BEGIN_END`, one value) with the primitive, then copies vertex DWORDs with `rep movsd`/MMX.
 * **Confirmed**: at run time the push buffers used only `SET_BEGIN_END` and `INLINE_ARRAY` (no unknown-method reports), drawing `FVF 000001C4` (XYZRHW, diffuse, specular, tex1; stride 32) strips. **Inferred**: thread 9 waits with `KeWaitForMultipleObjects` on objects including a timer, and would hang while timers do not fire.
-* **Confirmed**: with timers firing (rexbox #12) the wait ends and the frame loop runs at 30 fps intervals; thread 4 then stops at `IDirectSoundBuffer_SetFormat` (`0010712B`).
+* **Confirmed**: with timers firing (rexbox #12) the wait ends and the frame loop runs at 30 fps intervals; thread 4 then stopped at `IDirectSoundBuffer_SetFormat` (`0010712B`); with it added (rexbox #9) the frame loop runs 60 s without a stall until thread 10 stops at `D3DDevice_CreatePalette` (`000F93A0`), every frame meanwhile black. **Confirmed**: `XAudioCalculatePitch` (`0010587A`) is `round(4096 × log2(f / 48000))` (0 for 0 Hz); its helper `sub_00109E9D` uses `fyl2x` and `fistp`, and the constants are `0x1BA5F0` = 1/48000 and `0x17DDC0` = 2^32 (the negative-DWORD correction).
 * **Unresolved**: when the DPC routine `000E0A69` is queued (the runs so far stop before it), and the hardware's z scale of screen coordinates.
