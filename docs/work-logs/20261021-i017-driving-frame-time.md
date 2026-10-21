@@ -43,7 +43,7 @@ pie showData
 ## 남은 것
 
 * rexbox #23 구현(설계만 했다). 그 뒤 렌더 스레드 설계.
-* 어트랙트 데모 중 드문 정지: `000C11B1`의 `call [eax+0x18]`이 0을 불러 건너뛰고 멈춘다(수정 빌드 6회 중 2회, 기준 11회 중 0회). 스레드 경합으로 **추정**(분석 §7).
+* 어트랙트 데모 중 드문 정지: `000C11B1`의 `call [eax+0x18]`이 0을 불러 건너뛰고 멈춘다(수정 빌드 6회 중 2회, 기준 11회 중 0회). 스레드 경합으로 **추정**(분석 §7, issue #18).
 * 표시 스레드의 `NtWriteFile`(프레임당 약 0.9 ms)의 출처(분석 §7).
 * rexbox 작업 브랜치는 push하지 않았다. 머지 요청이 오면 rexbox #22를 머지하고 submodule을 머지된 커밋으로 고정한다.
 
@@ -74,6 +74,6 @@ Verification:
 Left over:
 
 * Implementing rexbox #23 (designed only), then a render-thread design.
-* A rare stop in the attract demo: `call [eax+0x18]` at `000C11B1` finds 0 and is skipped, then the run stops (2 of 6 runs of the fixed build, 0 of 11 of the baseline); **inferred** to be a thread race (analysis section 7).
+* A rare stop in the attract demo: `call [eax+0x18]` at `000C11B1` finds 0 and is skipped, then the run stops (2 of 6 runs of the fixed build, 0 of 11 of the baseline); **inferred** to be a thread race (analysis section 7, issue #18).
 * The source of the presenting thread's `NtWriteFile` (about 0.9 ms per frame; analysis section 7).
 * The rexbox task branch is not pushed. On a merge request, rexbox #22 is merged first and the submodule pinned to the merged commit.
