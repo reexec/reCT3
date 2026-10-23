@@ -1,24 +1,46 @@
 #!/usr/bin/env python3
-"""List CT3 functions reached only through pointers and not lifted (rexbox's script with this title's paths).
+"""List CT3 functions reached only through pointers and not lifted.
 
     python scripts/recomp/find_pointer_targets.py            # list candidates
     python scripts/recomp/find_pointer_targets.py --write    # also write the seed file, then regenerate
+
+The lifted addresses come from this project's generated dispatch table
+(lifter.py); the scan and the seed file are rexbox's pointer_targets.py.
 """
 
+import argparse
 import pathlib
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "third_party" / "rexbox" / "scripts" / "recomp"))
-import find_pointer_targets  # noqa: E402  (rexbox's)
+from lifter import ROOT, lifted_addresses
+from pointer_targets import merge_seeds, print_candidates, scan  # noqa: E402  (rexbox's)
+from xbe_variant import check_xbe  # noqa: E402  (rexbox's)
 
 TITLE = ROOT / "src" / "game" / "ct3"
+VARIANT = "ct3_jp"
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--xbe", type=pathlib.Path, default=ROOT / "roms" / "default.xbe")
+    parser.add_argument("--dispatch", type=pathlib.Path, default=ROOT / "gen" / VARIANT / "gen" / "recomp_dispatch.c",
+                        help="the generated recomp_dispatch.c")
+    parser.add_argument("--write", action="store_true")
+    args = parser.parse_args()
+
+    problem = check_xbe(args.xbe, VARIANT, TITLE / "recomp" / "variants.json")
+    if problem:
+        print(f"error: {problem}", file=sys.stderr)
+        return 2
+    if not args.dispatch.exists():
+        print(f"error: {args.dispatch} is missing; run regenerate.py first", file=sys.stderr)
+        return 2
+    references = scan(args.xbe.read_bytes(), lifted_addresses(args.dispatch))
+    print_candidates(references)
+    if args.write:
+        merge_seeds(TITLE / "recomp" / "seed_pointer_targets.json", references)
+    return 0
+
 
 if __name__ == "__main__":
-    sys.exit(find_pointer_targets.run(
-        xbe=ROOT / "roms" / "default.xbe",
-        variant="ct3_jp",
-        variants=TITLE / "recomp" / "variants.json",
-        dispatch=ROOT / "gen" / "ct3_jp" / "gen" / "recomp_dispatch.c",
-        seed_file=TITLE / "recomp" / "seed_pointer_targets.json",
-    ))
+    sys.exit(main())

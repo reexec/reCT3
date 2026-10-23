@@ -17,7 +17,7 @@
 ```powershell
 git clone --recurse-submodules https://github.com/reexec/reCT3.git
 cd reCT3
-# submodule 없이 받았다면(rexbox와 그 안의 SDL·imgui·smaa·XbSymbolDatabase·xboxrecomp, 그리고 xboxrecomp):
+# submodule 없이 받았다면(rexbox와 그 안의 SDL·imgui·smaa·XbSymbolDatabase, 그리고 xboxrecomp):
 git submodule update --init --recursive
 ```
 
@@ -51,7 +51,7 @@ pip install capstone
 python scripts\recomp\regenerate.py      # gen/ct3_jp/ 에 생성
 ```
 
-`regenerate.py`는 기본으로 `roms\default.xbe`를 읽는다. 다른 경로는 `--xbe <경로>`로 준다. 읽기 전에 MD5가 등록된 일본판(`src/game/ct3/recomp/variants.json`)과 같은지 확인하고, 다르거나 등록되지 않았으면 생성하지 않고 멈춘다. 파이프라인은 이 저장소가 고정한 upstream xboxrecomp(`third_party/xboxrecomp`, v0.15.0)를 쓴다.
+`regenerate.py`는 기본으로 `roms\default.xbe`를 읽는다. 다른 경로는 `--xbe <경로>`로 준다. 읽기 전에 MD5가 등록된 일본판(`src/game/ct3/recomp/variants.json`)과 같은지 확인하고, 다르거나 등록되지 않았으면 생성하지 않고 멈춘다. 파이프라인(`scripts/recomp/lifter.py`)은 이 저장소가 고정한 upstream xboxrecomp(`third_party/xboxrecomp`, v0.15.0)를 쓴다.
 
 생성 코드는 커밋하지 않는다. `src/game/ct3/decomp/`를 바꾸거나 submodule을 갱신한 뒤에는 다시 생성한다. 생성하지 않으면 앱은 로드 단계에서 멈춘다.
 
@@ -90,9 +90,9 @@ XBE가 등록되기 전에는 `error: default.xbe is not a supported Crazy Taxi 
 Based on: [design i001](../design/20261020-i001-project-bootstrap.md), [work log i001](../work-logs/20261020-i001-project-bootstrap.md)
 
 1. **Requirements**: Windows 10/11; Visual Studio 2022 or 2026 with the "Desktop development with C++" workload; a graphics driver with OpenGL 3.3 or newer for the window (`REXBOX_DISPLAY=none` runs without one); CMake 3.20+; Git; for the recompilation pipeline, Python 3.10+ with `pip install capstone`; a dump of a Crazy Taxi 3: High Roller (Japan) disc you own.
-2. **Get the repository**: `git clone --recurse-submodules https://github.com/reexec/reCT3.git` (or `git submodule update --init --recursive` after a plain clone; the submodules are rexbox with its own SDL, imgui, smaa, XbSymbolDatabase and xboxrecomp, plus this project's xboxrecomp pin).
+2. **Get the repository**: `git clone --recurse-submodules https://github.com/reexec/reCT3.git` (or `git submodule update --init --recursive` after a plain clone; the submodules are rexbox with its own SDL, imgui, smaa and XbSymbolDatabase, plus this project's xboxrecomp pin).
 3. **Place the game files** under `roms/` (gitignored; never commit them): `roms/default.xbe` and `roms/Media/`. Extract an ISO with [extract-xiso](https://github.com/XboxDev/extract-xiso) or [xdvdfs](https://github.com/antangelo/xdvdfs).
 4. **Register the XBE** (once): `python scripts\recomp\register_xbe.py` writes the Japan build's MD5 into `variants.json` and prints the certificate values to paste into `kVariants` in `src\game\ct3\ct3_profile.cpp` and the row for `docs\analysis\ct3-xbe-overview.md`; `rexbox_xbe_info.exe` prints the header, sections, libraries and kernel imports.
-5. **Generate the recompiled code**: `pip install capstone`; build `rexbox_xdk_symbols` first (`.\scripts\build_win32_x86.ps1 -Configuration Release -Target rexbox_xdk_symbols`); then `python scripts\recomp\regenerate.py` (into `gen/ct3_jp/`). It reads `roms\default.xbe` unless `--xbe <path>` names another, stops when the MD5 is not the registered Japan build's, and uses this project's upstream xboxrecomp pin (`third_party/xboxrecomp`, v0.15.0). Generated code is never committed; regenerate after changing `src/game/ct3/decomp/` or moving a submodule.
+5. **Generate the recompiled code**: `pip install capstone`; build `rexbox_xdk_symbols` first (`.\scripts\build_win32_x86.ps1 -Configuration Release -Target rexbox_xdk_symbols`); then `python scripts\recomp\regenerate.py` (into `gen/ct3_jp/`). It reads `roms\default.xbe` unless `--xbe <path>` names another, stops when the MD5 is not the registered Japan build's, and the pipeline (`scripts/recomp/lifter.py`) uses this project's upstream xboxrecomp pin (`third_party/xboxrecomp`, v0.15.0). Generated code is never committed; regenerate after changing `src/game/ct3/decomp/` or moving a submodule.
 6. **Build**: `.\scripts\build_win32_x86.ps1` for Debug, `-Configuration Release` for Release (`scripts\build_win32_x86.bat` when the execution policy blocks `.ps1` files). Output goes under `build\win32_x86\`; rexbox's tools under `build\win32_x86\third_party\rexbox\tools\<config>\`.
 7. **Check**: `ctest --test-dir build\win32_x86 -C Debug --output-on-failure` runs the three rexbox probes and the two app smoke tests (the command CI uses); by hand, the three rexbox probes report 83, 55 and 220 checks with 0 failures; `rect3.exe roms` serves the folder as the game's `D:` and identifies `default.xbe` by its certificate. Before registration it stops with `not a supported Crazy Taxi 3: High Roller build` (exit code 1); after registration, a build without recompiled code ends with `this build has no recompiled code ...; stopping after load` (exit code 0); with recompiled code it runs from the entry point and reports where it stopped. Window controls, the settings menu (Tab), the environment variables (`REXBOX_*`, `RECT3_HDD_ROOT`) and the diagnostics are as in reJSRF: see [rexbox ARCHITECTURE §5](../../third_party/rexbox/ARCHITECTURE.md) and [reJSRF's guide](https://github.com/nworkers/reJSRF/blob/main/docs/guides/win32-setup-and-build.md). The game's hard disk is created under `hdd\` in the current folder (`RECT3_HDD_ROOT` moves it); settings are saved in `rect3.ini` next to the executable.

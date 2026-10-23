@@ -254,7 +254,7 @@ If the requirement is a simple question or confirmation request, answer it direc
 
 * 프로젝트 라이선스는 `MIT License`다.
 * 서드파티 오픈소스는 MIT, BSD, zlib, ISC, Apache-2.0, Boost 같은 허용적 라이선스만 빌드에 포함한다.
-* GPL, LGPL, AGPL 같은 전염성 라이선스의 코드는 컴파일·링크하지 않고 저장소에 복사하지도 않는다. rexbox의 `rexbox_check_license`(`REXBOX_COPYLEFT_PATHS`)가 xboxrecomp의 LGPL 파일을 막으며 이 저장소의 타깃에도 적용한다.
+* GPL, LGPL, AGPL 같은 전염성 라이선스의 코드는 컴파일·링크하지 않고 저장소에 복사하지도 않는다. xboxrecomp 체크아웃(`third_party/xboxrecomp`)의 LGPL 파일(`src/apu/*`, `src/nv2a/nv2a_core.c`, `src/nv2a/nv2a_regs.h`, `src/nv2a/nv2a_state.h`)과 `include/xbox/xboxrecomp.h`는 어느 타깃의 소스 목록에도 넣지 않는다. 우리 타깃이 컴파일하는 xboxrecomp 파일은 생성 코드 옆에 놓인 MIT 헤더 `recomp_types.h`뿐이다. 이를 검사하는 CMake 가드는 두지 않는다.
 * 전염성 라이선스 프로젝트(xemu, Cxbx-Reloaded 등)는 동작을 이해하는 지식 출처로만 참고하고, 코드를 옮기지 않는다.
 * 라이선스가 명시되지 않았거나 LLM 기여를 금지한 프로젝트의 코드는 가져오지 않는다. 공개 문서의 사실은 출처를 달아 참고할 수 있다.
 * 서드파티 코드를 가져오면 같은 작업에서 `THIRD_PARTY_NOTICES.md`를 갱신한다. 예외가 필요하면 먼저 문서화하고 사용자 확인을 받는다.
@@ -264,7 +264,7 @@ If the requirement is a simple question or confirmation request, answer it direc
 
 * The project license is the `MIT License`.
 * Only permissively licensed third-party code (MIT, BSD, zlib, ISC, Apache-2.0, Boost, ...) is built into the project.
-* Copyleft code (GPL, LGPL, AGPL) is neither compiled, linked, nor copied into the repository. rexbox's `rexbox_check_license` (`REXBOX_COPYLEFT_PATHS`) blocks xboxrecomp's LGPL files and is applied to this repository's targets too.
+* Copyleft code (GPL, LGPL, AGPL) is neither compiled, linked, nor copied into the repository. The LGPL files of the xboxrecomp checkout (`third_party/xboxrecomp`: `src/apu/*`, `src/nv2a/nv2a_core.c`, `src/nv2a/nv2a_regs.h`, `src/nv2a/nv2a_state.h`) and `include/xbox/xboxrecomp.h` are never added to any target's source list. The only xboxrecomp file our targets compile is the MIT header `recomp_types.h` next to the generated code. No CMake guard checks this.
 * Copyleft projects (xemu, Cxbx-Reloaded, ...) are consulted only as sources of knowledge about behavior; their code is not carried over.
 * Do not take code from projects with no stated license or that forbid LLM contributions. Facts from their public documents may be used with attribution.
 * When bringing in third-party code, update `THIRD_PARTY_NOTICES.md` in the same task. If an exception is needed, document it and confirm with the user first.

@@ -24,11 +24,11 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/rexbox/CMakeLists.txt")
     message(FATAL_ERROR "third_party/rexbox is missing; run: git submodule update --init --recursive")
 endif()
-# The lifter: this project pins upstream xboxrecomp itself (third_party/xboxrecomp),
-# so the generated code and rexbox_recomp compile against that checkout's ABI header.
-set(REXBOX_XBOXRECOMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/xboxrecomp" CACHE PATH
-    "xboxrecomp checkout whose lifter ABI header rexbox_recomp compiles against")
-if(NOT EXISTS "${REXBOX_XBOXRECOMP_DIR}/templates/runtime/recomp_types.h")
+# The lifter is this project's: it pins upstream xboxrecomp itself
+# (third_party/xboxrecomp), and scripts/recomp/lifter.py runs it. The generated
+# code carries the lifter's ABI header (gen/<variant>/gen/recomp_types.h), which
+# rexbox_add_recompiled_library compiles rexbox's side of the ABI against.
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/xboxrecomp/templates/runtime/recomp_types.h")
     message(FATAL_ERROR "third_party/xboxrecomp is missing; run: git submodule update --init --recursive")
 endif()
 # rexbox_xdk_symbols (for scripts/recomp/regenerate.py) and the probes (CI).
@@ -53,6 +53,5 @@ add_subdirectory(src/game/ct3)       # rect3_game: CT3 title code + profile
 add_subdirectory(src/app)            # rect3: the executable
 
 foreach(target IN ITEMS rect3_game rect3)
-    rexbox_check_license(${target})
     rexbox_strict_warnings(${target})
 endforeach()
