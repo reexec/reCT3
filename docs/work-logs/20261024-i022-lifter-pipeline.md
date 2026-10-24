@@ -24,7 +24,7 @@
 
 ## 남은 것
 
-* rexbox #26이 v0.0.11(`d532817`)로 머지되어 `third_party/rexbox`를 그 머지 커밋으로 올렸다. ARCHITECTURE와 THIRD_PARTY_NOTICES의 rexbox 버전 표기도 맞췄다.
+* rexbox #26은 v0.0.11로 머지되었고, 생성 코드 없는 트리(이 저장소의 CI)에서 앱이 링크되지 않던 그 문제를 v0.0.12(`a018038`)가 고쳤다. `third_party/rexbox`를 v0.0.12의 머지 커밋으로 올렸다. ARCHITECTURE와 THIRD_PARTY_NOTICES의 rexbox 버전 표기도 맞췄다.
 
 ---
 
@@ -54,4 +54,4 @@ Verification:
 
 Left over:
 
-* rexbox #26 was merged as v0.0.11 (`d532817`); `third_party/rexbox` now points at that merge commit, and the rexbox version in ARCHITECTURE and THIRD_PARTY_NOTICES matches it.
+* rexbox #26 was merged as v0.0.11, and v0.0.12 (`a018038`) fixed its link failure for an application in a tree with no generated code (this repository's CI); `third_party/rexbox` points at v0.0.12's merge commit, and the rexbox version in ARCHITECTURE and THIRD_PARTY_NOTICES matches it.
