@@ -48,3 +48,30 @@ jobs:
       - name: Tests (CTest)
         shell: powershell
         run: ctest --test-dir build\win32_x86 -C ${{ matrix.configuration }} --output-on-failure
+
+  linux:
+    name: Linux x64 ${{ matrix.configuration }} build and tests
+    # x64 only: the x86 (-m32) build needs the i386 development packages,
+    # whose install fails on the ubuntu-24.04 image (rexbox's Linux CI since
+    # its v0.0.3); x86 is verified locally (docs/guides/linux-setup-and-build.md).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        configuration: [debug, release]
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Install the toolchain and SDL3's development libraries
+        run: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libasound2-dev libpulse-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxss-dev libxtst-dev libxfixes-dev libxkbcommon-dev libwayland-dev libdecor-0-dev libdrm-dev libgbm-dev libgl-dev libegl-dev
+
+      - name: Build and test
+        # Through bash: the checkout may not carry the execute bit.
+        run: bash scripts/build_linux.sh x64 ${{ matrix.configuration }}
