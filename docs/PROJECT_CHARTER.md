@@ -16,13 +16,13 @@ Game logic is carried by code mechanically lifted from the original x86, and dec
 
 * 1차 타깃 실행 파일은 일본판 `default.xbe`다. 아직 손에 없으며, 준비되면 `scripts/recomp/register_xbe.py`로 신원(MD5, 인증서)을 등록하고 분석을 시작한다. 다른 지역판은 식별만 한다(발견되면).
 * 1차 호스트는 Win32 x86이다. 어느 정도 진행된 뒤 Win64, Linux x86/x64, Web, Android로 넓힌다.
-* rexbox는 upstream xboxrecomp v0.15.0과 함께 쓴다. reJSRF의 fork에만 있는 lifter 수정이 필요해지면 upstream PR로 해결한다.
+* lifter는 upstream xboxrecomp v0.15.0이며, 이 저장소가 고정하고 실행한다(rexbox는 lifter를 모른다, rexbox issue #26). reJSRF의 fork에만 있는 lifter 수정이 필요해지면 upstream PR로 해결한다.
 
 ## Current First Target
 
 * The first target executable is the Japan build `default.xbe`. It is not in hand yet; once it is, `scripts/recomp/register_xbe.py` registers its identity (MD5, certificate) and analysis starts. Other regional builds are recognized only (when found).
 * The first host is Win32 x86. Once the project is well along, it widens to Win64, Linux x86/x64, the web and Android.
-* rexbox is used with upstream xboxrecomp v0.15.0. Lifter fixes that exist only in reJSRF's fork are taken through upstream pull requests when needed.
+* The lifter is upstream xboxrecomp v0.15.0, pinned and run by this repository (rexbox knows no lifter, rexbox issue #26). Lifter fixes that exist only in reJSRF's fork are taken through upstream pull requests when needed.
 
 ## 방향성
 
