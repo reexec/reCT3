@@ -43,7 +43,7 @@ cd reCT3
 |---|---|
 | Win32 x86 | 빌드됨(게임 없이). rexbox probe 통과 |
 | Win64 | 예정 |
-| Linux x86 / x64 | 예정 |
+| Linux x86 / x64 | 빌드되고 어트랙트 데모까지 실행됨(WSL2 Ubuntu 24.04, GCC 13; [가이드](docs/guides/linux-setup-and-build.md)). 실기 확인 예정 |
 | Web (wasm32) | 예정 |
 | Android | 예정 |
 
@@ -81,7 +81,7 @@ See the commands above, and [Win32 development setup and build](docs/guides/win3
 
 ## Platform status
 
-Win32 x86 builds (without a game) and the rexbox probes pass; Win64, Linux x86/x64, the web (wasm32) and Android are planned.
+Win32 x86 builds (without a game) and the rexbox probes pass; Linux x86 and x64 build and run to the attract demo (WSL2 Ubuntu 24.04, GCC 13; [guide](docs/guides/linux-setup-and-build.md)), with a Linux machine still to be checked; Win64, the web (wasm32) and Android are planned.
 
 ## Contributing and working rules
 
