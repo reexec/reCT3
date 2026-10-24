@@ -24,7 +24,7 @@
 
 ## 남은 것
 
-* rexbox #26이 머지되면 `third_party/rexbox`를 머지 커밋 또는 태그로 올린다. 그때까지 작업 브랜치 커밋 고정은 임시 상태다.
+* rexbox #26이 v0.0.11(`d532817`)로 머지되어 `third_party/rexbox`를 그 머지 커밋으로 올렸다. ARCHITECTURE와 THIRD_PARTY_NOTICES의 rexbox 버전 표기도 맞췄다.
 
 ---
 
@@ -54,4 +54,4 @@ Verification:
 
 Left over:
 
-* Once rexbox #26 is merged, move `third_party/rexbox` to the merge commit or a tag; until then the pin on a task-branch commit is temporary.
+* rexbox #26 was merged as v0.0.11 (`d532817`); `third_party/rexbox` now points at that merge commit, and the rexbox version in ARCHITECTURE and THIRD_PARTY_NOTICES matches it.

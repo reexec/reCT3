@@ -30,7 +30,7 @@ flowchart BT
 
 | 타깃 | 경로 | 책임 | 상태 |
 |---|---|---|---|
-| `rexbox_*`, `imgui` | `third_party/rexbox/` | 공유 런타임(구조는 rexbox ARCHITECTURE §1). 이 저장소는 `REXBOX_BUILD_TOOLS=ON`으로 도구와 probe도 빌드한다. rexbox는 lifter를 모르며, lifter(`third_party/xboxrecomp`, upstream v0.15.0)는 이 저장소가 고정하고 실행한다 | 93d3b71 (rexbox branch commit `93d3b71`) |
+| `rexbox_*`, `imgui` | `third_party/rexbox/` | 공유 런타임(구조는 rexbox ARCHITECTURE §1). 이 저장소는 `REXBOX_BUILD_TOOLS=ON`으로 도구와 probe도 빌드한다. rexbox는 lifter를 모르며, lifter(`third_party/xboxrecomp`, upstream v0.15.0)는 이 저장소가 고정하고 실행한다 | rexbox `v0.0.11` (`d532817`) |
 | `rect3_game` | `src/game/ct3/` | 프로파일(`ct3_profile.cpp`: 인증서로 빌드 식별, `BindTitleHle`로 생성된 XDK 변수 표와 XDK 내부 주소를 `HleRegistry`에 묶음), 생성된 lookup 노출(`ct3_recomp.cpp`), 호스트 훅(`ct3_host.c`, `include/rect3/ct3_host.h`: 와이드스크린 가로 시야 배율), 디컴파일 함수(`decomp/`, 아직 없음), 재컴파일 설정(`recomp/`: `variants.json`, `hle_libraries.json`, `seed_functions.json`, `xdk_symbols_extra.json`) | 일본판 변형은 미등록(값 0) |
 | `rect3_recomp` | `gen/ct3_jp/gen/` (gitignore) | lift된 C; rexbox의 `rexbox_add_recompiled_library`가 만든다. rexbox의 `recomp_abi.c`는 OBJECT 타깃 `rect3_recomp_abi`로 같은 디렉터리의 `recomp_types.h`에 맞춰 컴파일되어 여기에 들어간다 | `gen/`이 있을 때만 |
 | `rect3` | `src/app/` | 게임 디렉터리의 `default.xbe`(또는 `--xbe <파일>`)를 읽어 내용으로 식별, 설정(`rect3.ini`, Tab 메뉴, 통계 창: reJSRF의 `settings*.cpp`와 같음), 부팅 orchestration과 스레드 보고. `SetDisplayTitle`, `SetApplicationIdentity("reCT3","reCT3")`, `SetDisplayDefaults`, `SetRumbleStrength`로 rexbox에 자기 이름과 기본값을 준다 | 로드 단계까지(게임 없음) |
@@ -68,7 +68,7 @@ rexbox ARCHITECTURE §3과 같다. 앱이 XBE를 식별·배치하고 HLE를 등
 * `RECT3_RECOMP_GEN_DIR`(기본 `gen/ct3_jp/gen`)이 없으면 `rect3_recomp`를 만들지 않는다(CI).
 * 실행 시 환경 변수: `RECT3_HDD_ROOT`(HDD 루트, 기본 `./hdd`)와 rexbox의 `REXBOX_*`(rexbox ARCHITECTURE §5).
 * 테스트와 CI: rexbox의 probe 세 개와 앱 smoke 두 개(`src/app/CMakeLists.txt`)가 CTest에 등록되어 `ctest -C <config>`로 돈다. `ci.yml`과 `release.yml`은 rexbox와 같은 규칙이다([설계 i002](docs/design/20261020-i002-github-actions.md)).
-* submodule: `third_party/rexbox`(rexbox branch commit `93d3b71`), `third_party/xboxrecomp`(upstream `v0.15.0`, `6376eb8`).
+* submodule: `third_party/rexbox`(rexbox `v0.0.11`, `d532817`), `third_party/xboxrecomp`(upstream `v0.15.0`, `6376eb8`).
 
 ---
 
@@ -90,4 +90,4 @@ As in rexbox's ARCHITECTURE §3: the app identifies and places the XBE, register
 
 ## 4. Build configuration
 
-The root CMake calls `rexbox_apply_host_flags()` (MSVC `/utf-8 /permissive- /EHa`, `NOMINMAX` and friends), builds our targets at `/W4` (`rexbox_strict_warnings`; there is no license-guard code, see the license rules in AGENTS.md), and links `rect3` with `/LARGEADDRESSAWARE` and `/MAP`. Without `RECT3_RECOMP_GEN_DIR` (default `gen/ct3_jp/gen`) no `rect3_recomp` is created (CI). Run-time variables: `RECT3_HDD_ROOT` (HDD root, default `./hdd`) and rexbox's `REXBOX_*` (rexbox ARCHITECTURE §5). Tests and CI: rexbox's three probes and the two app smoke tests (`src/app/CMakeLists.txt`) are registered with CTest and run with `ctest -C <config>`; `ci.yml` and `release.yml` follow rexbox's rules ([design i002](docs/design/20261020-i002-github-actions.md)). Submodules: `third_party/rexbox` (rexbox branch commit `93d3b71`) and `third_party/xboxrecomp` (upstream `v0.15.0`, `6376eb8`).
+The root CMake calls `rexbox_apply_host_flags()` (MSVC `/utf-8 /permissive- /EHa`, `NOMINMAX` and friends), builds our targets at `/W4` (`rexbox_strict_warnings`; there is no license-guard code, see the license rules in AGENTS.md), and links `rect3` with `/LARGEADDRESSAWARE` and `/MAP`. Without `RECT3_RECOMP_GEN_DIR` (default `gen/ct3_jp/gen`) no `rect3_recomp` is created (CI). Run-time variables: `RECT3_HDD_ROOT` (HDD root, default `./hdd`) and rexbox's `REXBOX_*` (rexbox ARCHITECTURE §5). Tests and CI: rexbox's three probes and the two app smoke tests (`src/app/CMakeLists.txt`) are registered with CTest and run with `ctest -C <config>`; `ci.yml` and `release.yml` follow rexbox's rules ([design i002](docs/design/20261020-i002-github-actions.md)). Submodules: `third_party/rexbox` (rexbox `v0.0.11`, `d532817`) and `third_party/xboxrecomp` (upstream `v0.15.0`, `6376eb8`).
