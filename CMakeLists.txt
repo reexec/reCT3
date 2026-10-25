@@ -51,6 +51,10 @@ enable_testing()
 # Layers above rexbox. Each links only the layers below it.
 add_subdirectory(src/game/ct3)       # rect3_game: CT3 title code + profile
 add_subdirectory(src/app)            # rect3: the executable
+# rect3_decomp_check and other tools that need the generated code.
+if(TARGET rect3_recomp)
+    add_subdirectory(tools)
+endif()
 
 foreach(target IN ITEMS rect3_game rect3)
     rexbox_strict_warnings(${target})

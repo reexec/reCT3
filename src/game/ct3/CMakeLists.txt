@@ -25,6 +25,12 @@ if(TARGET rect3_recomp)
     # Decompiled sources include the generated declarations.
     target_include_directories(rect3_game PRIVATE "${RECT3_RECOMP_GEN_DIR}")
     target_compile_definitions(rect3_game PRIVATE RECT3_HAS_RECOMP=1)
+    if(MSVC AND RECT3_DECOMP_SOURCES)
+        # The lifter's header as its authors wrote it: its constant casts
+        # (C4310, upstream xboxrecomp v0.15.0's x87 helpers) are not ours to
+        # change; rexbox's ABI object turns the same warning off.
+        set_source_files_properties(${RECT3_DECOMP_SOURCES} PROPERTIES COMPILE_OPTIONS /wd4310)
+    endif()
 elseif(RECT3_DECOMP_SOURCES)
     # Decompiled functions only make sense next to the code they replace.
     set_source_files_properties(${RECT3_DECOMP_SOURCES} PROPERTIES HEADER_FILE_ONLY ON)
