@@ -1,7 +1,8 @@
 // rect3_decomp_check: runs each decompiled function and the lifted body it
 // replaced (sub_X_gen) from identical guest states and compares what they
 // leave behind: the general registers, g_seh_ebp, XMM0..7, the x87 control
-// word and stack top, and all of guest memory.
+// word, stack top and all eight stack slots (bit for bit), and all of guest
+// memory.
 //
 // Usage: rect3_decomp_check
 // Exit code 0 when every case matches.
@@ -67,6 +68,7 @@ struct GuestState
     uint32_t xmm[8][4] = {};
     uint16_t control_word = kPc24;
     uint32_t fpu_top = 0;
+    double fpu_slots[8] = {};
     uint32_t seh_ebp = 0;
 };
 
@@ -93,6 +95,7 @@ Outcome RunFrom(GuestMemory& memory, const std::vector<uint8_t>& initial_memory,
         rexbox_recomp_set_xmm(i, initial.xmm[i]);
     }
     rect3_check_set_fpu(initial.control_word, initial.fpu_top);
+    rect3_check_set_fpu_stack(initial.fpu_slots);
     rect3_check_set_seh_ebp(initial.seh_ebp);
     function();
     Outcome outcome;
@@ -102,6 +105,7 @@ Outcome RunFrom(GuestMemory& memory, const std::vector<uint8_t>& initial_memory,
         rexbox_recomp_get_xmm(i, outcome.state.xmm[i]);
     }
     rect3_check_get_fpu(&outcome.state.control_word, &outcome.state.fpu_top);
+    rect3_check_get_fpu_stack(outcome.state.fpu_slots);
     outcome.state.seh_ebp = rect3_check_get_seh_ebp();
     outcome.memory.assign(memory.base(), memory.base() + memory.size());
     return outcome;
@@ -139,6 +143,15 @@ bool Compare(const char* function, const Case& test, const Outcome& decompiled, 
                     decompiled.state.control_word, decompiled.state.fpu_top, lifted.state.control_word,
                     lifted.state.fpu_top);
         same = false;
+    }
+    for (int i = 0; i < 8; ++i)
+    {
+        if (std::memcmp(&decompiled.state.fpu_slots[i], &lifted.state.fpu_slots[i], 8) != 0)
+        {
+            std::printf("  %s %s: x87 slot %d decompiled %.17g lifted %.17g\n", function, test.name.c_str(), i,
+                        decompiled.state.fpu_slots[i], lifted.state.fpu_slots[i]);
+            same = false;
+        }
     }
     if (decompiled.state.seh_ebp != lifted.state.seh_ebp)
     {
@@ -206,6 +219,11 @@ void Frame(GuestMemory& m, GuestState& s, uint32_t a1, uint32_t a2, uint32_t a3)
     r.ebp = 0x55555555;
     r.esp = kEsp;
     s.seh_ebp = 0x66666666;
+    // Stale x87 slots, so a slot a function leaves different shows.
+    for (int i = 0; i < 8; ++i)
+    {
+        s.fpu_slots[i] = 1000.0 + i;
+    }
     for (uint32_t i = 0; i < 8; ++i)
     {
         for (uint32_t j = 0; j < 4; ++j)

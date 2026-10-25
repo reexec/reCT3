@@ -15,9 +15,9 @@
  *   - the x87 routine works in double and rounds wherever the lifted body
  *     does, by the guest's precision control (recomp_fp_round24 at PC=24),
  *     and converts to float wherever the original stores a float.
- * They leave the general registers, XMM0..7 and the memory (including the
- * stores below esp and the argument slot the inverse overwrites) as the
- * originals do; rect3_decomp_check compares all of it. */
+ * They leave the general registers, XMM0..7, the x87 stack and the memory
+ * (including the stores below esp and the argument slot the inverse
+ * overwrites) as the originals do; rect3_decomp_check compares all of it. */
 
 #include "recomp_types.h"
 
@@ -180,8 +180,8 @@ static __inline double AsFloat(double x)
  * (lo_ij for rows i and j) and the two of columns 2-3 for rows 0-1 and 0-2
  * are stored as floats; the other four minors of columns 2-3 stay on the
  * x87 stack, at its precision. The original uses all eight x87 registers, so
- * it is only correct on an empty x87 stack; this version leaves the stack
- * slots alone (popped slots are dead) and the top unchanged. */
+ * it is only correct on an empty x87 stack; this version leaves the top
+ * unchanged and the eight slots holding what the original's pushes left. */
 void sub_000E4CB7(void)
 {
     const uint32_t esp = g_esp;       /* -> return address */
@@ -233,11 +233,15 @@ void sub_000E4CB7(void)
     const double c3 = AsFloat(R(R(R(hi02 * m[5]) - R(hi01 * m[9])) - R(hi12 * m[1])));
     const double c2 = AsFloat(R(R(R(hi13 * m[1]) - R(hi03 * m[5])) + R(hi01 * m[13])));
     const double c1 = AsFloat(R(R(R(hi03 * m[9]) - R(hi02 * m[13])) - R(hi23 * m[1])));
-    const double c0 = AsFloat(R(R(R(hi23 * m[5]) - R(hi13 * m[9])) + R(hi12 * m[13])));
+    const double c0_last = R(hi12 * m[13]);  /* left on the x87 stack */
+    const double c0_x87 = R(R(R(hi23 * m[5]) - R(hi13 * m[9])) + c0_last);
+    const double c0 = AsFloat(c0_x87);
     const double c7 = AsFloat(R(R(R(hi12 * m[0]) - R(hi02 * m[4])) + R(hi01 * m[8])));
     const double c6 = AsFloat(R(R(R(hi03 * m[4]) - R(hi01 * m[12])) - R(hi13 * m[0])));
     const double c5 = AsFloat(R(R(R(m[0] * hi23) - R(hi03 * m[8])) + R(hi02 * m[12])));
-    const double c4 = AsFloat(R(R(R(hi13 * m[8]) - R(hi12 * m[12])) - R(hi23 * m[4])));
+    const double c4_last = R(hi23 * m[4]);  /* left on the x87 stack */
+    const double c4_x87 = R(R(R(hi13 * m[8]) - R(hi12 * m[12])) - c4_last);
+    const double c4 = AsFloat(c4_x87);
 
     const double det = R(R(R(R(c3 * m[12]) + R(c2 * m[8])) + R(c1 * m[4])) + R(c0 * m[0]));
     const uint32_t det_out = MEM32(esp + 8);
@@ -245,7 +249,8 @@ void sub_000E4CB7(void)
     {
         StoreFloat(det_out, (float)det);
     }
-    const double inv = AsFloat(R(1.0 / det));
+    const double inv_x87 = R(1.0 / det);
+    const double inv = AsFloat(inv_x87);
 #undef R
 
     /* The frame as the original leaves it: the saved ebp and the final value
@@ -286,13 +291,19 @@ void sub_000E4CB7(void)
     const int finite = ((inv_bits >> 52) & 0x7FFu) != 0x7FFu;
     g_ecx = (uint32_t)(inv_bits >> 32);
 
+    /* The x87 registers the original pushed keep their last values after
+     * being popped; they are left the same, so even a caller that read an
+     * empty register would see what it saw before. Slot -k is the k-th push
+     * below the entry top. */
+    double second_slot = inv_x87;  /* the last value in slot -2 */
     if (finite)
     {
         const double cofactor[16] = {c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15};
         const uint32_t out = MEM32(esp + 4);
         for (int k = 0; k < 16; ++k)
         {
-            StoreFloat(out + 4u * (uint32_t)k, (float)Pc(pc24, cofactor[k] * inv));
+            second_slot = Pc(pc24, cofactor[k] * inv);
+            StoreFloat(out + 4u * (uint32_t)k, (float)second_slot);
         }
         g_eax = out;
     }
@@ -300,6 +311,15 @@ void sub_000E4CB7(void)
     {
         g_eax = 0;
     }
+    const uint32_t top = (uint32_t)g_fp_top;
+    g_fp_stack[(top + 7u) & 7u] = inv;
+    g_fp_stack[(top + 6u) & 7u] = second_slot;
+    g_fp_stack[(top + 5u) & 7u] = hi13;
+    g_fp_stack[(top + 4u) & 7u] = hi23;
+    g_fp_stack[(top + 3u) & 7u] = c4_x87;
+    g_fp_stack[(top + 2u) & 7u] = c4_last;
+    g_fp_stack[(top + 1u) & 7u] = c0_x87;
+    g_fp_stack[top & 7u] = c0_last;
     g_ebp = frame;
     g_seh_ebp = frame;
     g_esp = esp + 16; /* leave; ret 12 */

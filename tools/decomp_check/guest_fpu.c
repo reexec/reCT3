@@ -1,6 +1,6 @@
 /* rect3_decomp_check: the guest state the rexbox ABI does not expose, read
  * and set through the generated code's own header (recomp_types.h): the x87
- * control word and stack top, and the SEH frame bridge. */
+ * control word, stack top and slots, and the SEH frame bridge. */
 
 #include "recomp_types.h"
 
@@ -16,6 +16,22 @@ void rect3_check_get_fpu(uint16_t* control_word, uint32_t* top)
 {
     *control_word = g_fp_control_word;
     *top = (uint32_t)g_fp_top;
+}
+
+void rect3_check_set_fpu_stack(const double slots[8])
+{
+    for (int i = 0; i < 8; ++i)
+    {
+        g_fp_stack[i] = slots[i];
+    }
+}
+
+void rect3_check_get_fpu_stack(double slots[8])
+{
+    for (int i = 0; i < 8; ++i)
+    {
+        slots[i] = g_fp_stack[i];
+    }
 }
 
 void rect3_check_set_seh_ebp(uint32_t value)
