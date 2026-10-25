@@ -33,7 +33,7 @@ scripts/build_linux.sh x86 release                    # -m32
 cmake --preset linux-x64-release && cmake --build --preset linux-x64-release && ctest --preset linux-x64-release
 ```
 
-실행 파일은 `<빌드 트리>/src/app/rect3`다. SDL3의 Wayland 프로토콜 스캐너가 configure 때 내는 `validity error`(XML DTD)는 무시한다.
+실행 파일은 `<빌드 트리>/src/app/rect3`다. 생성 코드가 있으면 CTest가 `rect3_decomp_check`(`<빌드 트리>/tools/`)도 돌린다. SDL3의 Wayland 프로토콜 스캐너가 configure 때 내는 `validity error`(XML DTD)는 무시한다.
 
 ## 4. 실행
 
@@ -72,7 +72,7 @@ On a Linux machine, follow the [Win32 guide](win32-setup-and-build.md) sections 
 
 ## 3. Build and test
 
-`scripts/build_linux.sh x64 release` (or `x86`) configures, builds and runs `ctest`, in `$RECT3_BUILD_DIR/<preset>` or `build/<preset>`; the presets also work directly (`cmake --preset linux-x64-release` and so on). The executable is `<tree>/src/app/rect3`. The `validity error` lines from SDL3's Wayland protocol scanner at configure time (XML DTD) are harmless.
+`scripts/build_linux.sh x64 release` (or `x86`) configures, builds and runs `ctest`, in `$RECT3_BUILD_DIR/<preset>` or `build/<preset>`; the presets also work directly (`cmake --preset linux-x64-release` and so on). The executable is `<tree>/src/app/rect3`; with generated code CTest also runs `rect3_decomp_check` (`<tree>/tools/`). The `validity error` lines from SDL3's Wayland protocol scanner at configure time (XML DTD) are harmless.
 
 ## 4. Run
 
