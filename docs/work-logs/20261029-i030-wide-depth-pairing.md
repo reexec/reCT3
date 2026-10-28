@@ -8,7 +8,7 @@
 
 ## 한 일
 
-* `third_party/rexbox`를 v0.0.16 위의 i038 커밋 `8e6aa3d`로 올렸다. 넓힌 깊이와 같은 크기로 묶인 색 타깃도 넓히고, 그 샘플링 복사는 가운데 4:3만 가져간다. 캡처 줄에는 `zs`(깊이 표면)가 적힌다.
+* `third_party/rexbox`를 v0.0.17(`f4a6a48`, i038 머지)로 올렸다. 넓힌 깊이와 같은 크기로 묶인 색 타깃도 넓히고, 그 샘플링 복사는 가운데 4:3만 가져간다. 캡처 줄에는 `zs`(깊이 표면)가 적힌다.
 
 ## 검증
 
@@ -27,6 +27,6 @@ Work order: [20261029-i030](../work-orders/20261029-i030-wide-depth-pairing.md).
 
 Cause, from the user's capture (F9, frame 7289, 21:9, render scale 4): the black dots are holes that nothing drew after the back buffer's Clear, because the road draw failed the depth test there. The title draws its glow sources (the headlights among them) into a 640x480 texture target with depth writes on (31 draws between scene draws). That texture target stays 640 wide while the depth stencil bound with it is widened to 1120, so its depth landed at the 4:3 x instead of x + 240. The dots therefore followed the headlights 240 guest pixels to their left.
 
-Done: `third_party/rexbox` moved to the i038 commit `8e6aa3d` on top of v0.0.16. A color target bound at the widened depth's size is widened too, its sampling copy takes the 4:3 middle, and capture lines record `zs` (the depth surface).
+Done: `third_party/rexbox` moved to v0.0.17 (`f4a6a48`, the i038 merge). A color target bound at the widened depth's size is widened too, its sampling copy takes the 4:3 middle, and capture lines record `zs` (the depth surface).
 
 Verification: Win32 x86 Release build with no warnings or errors; `ctest -C Release` 7/7; no black dots while driving at night at 21:9 (**confirmed** by the user); the 21:9 attract demo ran 150 s (a stop at present 1794 in the first run did not reproduce on a rerun).
