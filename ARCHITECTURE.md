@@ -70,7 +70,7 @@ rexbox ARCHITECTURE §3과 같다. 앱이 XBE를 식별·배치하고 HLE를 등
 * `RECT3_RECOMP_GEN_DIR`(기본 `gen/ct3_jp/gen`)이 없으면 `rect3_recomp`를 만들지 않는다(CI).
 * 실행 시 환경 변수: `RECT3_HDD_ROOT`(HDD 루트, 기본 `./hdd`)와 rexbox의 `REXBOX_*`(rexbox ARCHITECTURE §5).
 * 테스트와 CI: rexbox의 probe 세 개, 앱 smoke 두 개(`src/app/CMakeLists.txt`), 생성 코드가 있으면 `rect3_decomp_check`가 CTest에 등록되어 `ctest -C <config>`로 돈다. `ci.yml`과 `release.yml`은 rexbox와 같은 규칙이다([설계 i002](docs/design/20261020-i002-github-actions.md)).
-* submodule: `third_party/rexbox`(rexbox `v0.0.18`, `08742ce`), `third_party/xboxrecomp`(upstream `v0.15.0`, `6376eb8`).
+* submodule: `third_party/rexbox`(rexbox `v0.0.19`, `7704477`), `third_party/xboxrecomp`(upstream `v0.15.0`, `6376eb8`).
 
 ---
 
@@ -92,4 +92,4 @@ As in rexbox's ARCHITECTURE §3: the app identifies and places the XBE, register
 
 ## 4. Build configuration
 
-The root CMake calls `rexbox_apply_host_flags()` (MSVC `/utf-8 /permissive- /EHa`, `NOMINMAX` and friends), builds our targets at `/W4` (`rexbox_strict_warnings`; there is no license-guard code, see the license rules in AGENTS.md), and links `rect3` with `/LARGEADDRESSAWARE` and `/MAP`. Without `RECT3_RECOMP_GEN_DIR` (default `gen/ct3_jp/gen`) no `rect3_recomp` is created (CI). Run-time variables: `RECT3_HDD_ROOT` (HDD root, default `./hdd`) and rexbox's `REXBOX_*` (rexbox ARCHITECTURE §5). Tests and CI: rexbox's three probes, the two app smoke tests (`src/app/CMakeLists.txt`) and, with generated code, `rect3_decomp_check` are registered with CTest and run with `ctest -C <config>`; `ci.yml` and `release.yml` follow rexbox's rules ([design i002](docs/design/20261020-i002-github-actions.md)). Submodules: `third_party/rexbox` (rexbox `v0.0.18`, `08742ce`) and `third_party/xboxrecomp` (upstream `v0.15.0`, `6376eb8`).
+The root CMake calls `rexbox_apply_host_flags()` (MSVC `/utf-8 /permissive- /EHa`, `NOMINMAX` and friends), builds our targets at `/W4` (`rexbox_strict_warnings`; there is no license-guard code, see the license rules in AGENTS.md), and links `rect3` with `/LARGEADDRESSAWARE` and `/MAP`. Without `RECT3_RECOMP_GEN_DIR` (default `gen/ct3_jp/gen`) no `rect3_recomp` is created (CI). Run-time variables: `RECT3_HDD_ROOT` (HDD root, default `./hdd`) and rexbox's `REXBOX_*` (rexbox ARCHITECTURE §5). Tests and CI: rexbox's three probes, the two app smoke tests (`src/app/CMakeLists.txt`) and, with generated code, `rect3_decomp_check` are registered with CTest and run with `ctest -C <config>`; `ci.yml` and `release.yml` follow rexbox's rules ([design i002](docs/design/20261020-i002-github-actions.md)). Submodules: `third_party/rexbox` (rexbox `v0.0.19`, `7704477`) and `third_party/xboxrecomp` (upstream `v0.15.0`, `6376eb8`).
