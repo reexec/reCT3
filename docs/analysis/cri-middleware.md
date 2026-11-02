@@ -36,9 +36,16 @@ CT3는 CRI의 사운드·스트리밍 미들웨어를 정적 링크한다. 이 �
 * 데모 150초 숨김 실행(Linux x64, 어댑터 적용)에서 다른 스레드가 잠금을 가진 동안 들어오려는 경우와, 잠금을 놓은 스레드가 우선순위 15로 남은 경우가 모두 나왔다(**확인됨**). 어댑터가 없으면 이때 두 스레드가 잠금 안에서 함께 돈다.
 * 대응: [설계 i029](../design/20261027-i029-adxm-lock.md). `src/game/ct3/decomp/adxm_lock.c`가 두 콜백을 런타임 게스트 잠금으로 감싸고, 우선순위를 스레드마다 되돌리고, `000BB9C0`이 이 스레드의 깊이만큼만 푼다.
 
-## 4. 미확정
+## 4. SJ 임계 구역 (**확인됨**)
 
-* Linux 플레이 중 음악이 한 구간을 반복하는 증상(issue #29). 어댑터로는 없어지지 않았다. 반복이 시작되면 48 kHz 음악 출력 버퍼가 바뀌지 않고 `ADX0.AFS` 읽기가 멈추며, 모든 스레드는 살아 있다(**확인됨**, [작업 로그 i029](../work-logs/20261027-i029-adxm-lock.md)). 서버 세 개(vsync 스레드의 레벨 2, mwidle 스레드의 레벨 5, thread 8의 파일 서버 `000B9860`)가 호스트에서 동시에 도는 것이 원인 후보다(**추정**).
+* SJ 링 함수(SJRBF GetChunk·PutChunk 등, `000B7E80`~`000B82C0`, `000B9A20`~`000B9FC0`)는 모두 `000BC950`에 들어가 `000BC970`(꼬리 점프)으로 나온다. 이 빌드에서 둘은 전역 `[0x2E05F0]`만 읽고 쓰는 빈 임계 구역이다.
+* SJ 링 객체: `+0x00` vtable(`0x210478`), `+0x0C`·`+0x10` 레인 0(빈 공간)·레인 1(데이터) 바이트 수, `+0x14`·`+0x18` 두 레인의 위치, `+0x1C` 버퍼, `+0x20` 크기, `+0x28` 오류 콜백(`000B7E20`), `+0x2C` 인자(**추정**: `PutChunk` `000B8120`의 사용으로 읽음).
+* `PutChunk`는 돌려받은 조각이 레인 위치와 이어지지 않으면 오류 −3을 알리고 조각을 버린다.
+* 호스트에서 파일 서버(thread 8)와 ADX 서버(vsync 스레드)가 음악의 입력 링을 동시에 고치면 바이트가 새고 스트림이 멈춘다(issue #29의 원인). 대응: [설계 i029 SJ 잠금](../design/20261103-i029-sj-lock.md), `src/game/ct3/decomp/sj_lock.c`.
+
+## 5. 미확정
+
+* SJ 잠금이 플레이에서도 음악 반복을 없애는지(데모 대조 실험에서는 없어짐, [작업 로그 i029](../work-logs/20261027-i029-adxm-lock.md)).
 * Windows에서 같은 증상이 드문 이유(타이밍 차이로 **추정**).
 
 ---
@@ -59,6 +66,10 @@ ADXXTL `Ver.4531`, ADXXB `Ver.1.38`, ADXT/XB `Ver.7.95` and WXCI/XB `Ver.1.40`, 
 
 `SVM_Lock` (`000B9170`) and `SVM_Unlock` (`000B9190`) call the callbacks in `[0x2E0430]` and `[0x2E0438]` with the arguments `[0x2E0434]` and `[0x2E043C]`. The lock `000B2FF0`, at global count `[0x2DFD9C]` 0, saves its priority (`GetThreadPriority` `000DDD95`) in `[0x34EA60]`, raises itself to TIME_CRITICAL (`SetThreadPriority` `000DDD43`) and resumes the safe thread (`ResumeThread` `000DDE55`); then count + 1. The unlock `000B3030` does count − 1 and, at 0, suspends the safe thread (`SuspendThread` `000DDE2F`) and restores the saved priority. `000BB9C0` repeats `SVM_Unlock` while the thread is TIME_CRITICAL and returns the count, and `000BB9E0` takes the lock back as many times with `SVM_Lock`. The count and the saved priority are single globals, and the exclusion comes only from a single core with strict priority scheduling; with guest threads running in parallel on the host the lock excludes nothing. A hidden 150 s demo run (Linux x64, with the adapter) showed both a thread asking for the lock while another held it and a thread left at priority 15 after leaving the lock (**confirmed**); without the adapter, two threads would have run inside the lock together. Remedy: [design i029](../design/20261027-i029-adxm-lock.md); `src/game/ct3/decomp/adxm_lock.c` wraps the two callbacks in a runtime guest lock, restores each thread's own priority, and has `000BB9C0` release only this thread's depth.
 
-## 4. Unresolved
+## 4. SJ critical section (**confirmed**)
 
-The music repeating one section during play on Linux (issue #29): the adapter did not remove it; once it starts, the 48 kHz music output buffer stops changing and the `ADX0.AFS` reads stop while every thread is alive (**confirmed**, [work log i029](../work-logs/20261027-i029-adxm-lock.md)), and the three servers (level 2 on the vsync thread, level 5 on the mwidle thread, the file server `000B9860` on thread 8) running in parallel on the host are the candidate cause (**inferred**); why Windows rarely shows it (timing, **inferred**).
+Every SJ ring function (the SJRBF GetChunk, PutChunk and friends, `000B7E80`–`000B82C0`, `000B9A20`–`000B9FC0`) enters `000BC950` and leaves through `000BC970` (a tail jump), an empty critical section in this build that only reads and writes the global `[0x2E05F0]`. An SJ ring object: `+0x00` vtable (`0x210478`), `+0x0C`/`+0x10` the byte counts of lane 0 (free) and lane 1 (data), `+0x14`/`+0x18` the two lanes' positions, `+0x1C` the buffer, `+0x20` its size, `+0x28` the error callback (`000B7E20`), `+0x2C` its argument (**inferred** from `PutChunk` `000B8120`'s use). `PutChunk` reports error −3 and drops a returned chunk that no longer meets its lane's position. On the host the file server (thread 8) and the ADX server (the vsync thread) updating the music's input ring together leak its bytes until the stream stops (the cause of issue #29). Remedy: [design i029 SJ lock](../design/20261103-i029-sj-lock.md), `src/game/ct3/decomp/sj_lock.c`.
+
+## 5. Unresolved
+
+Whether the SJ lock removes the music repeat in play too (it did in the demo comparison, [work log i029](../work-logs/20261027-i029-adxm-lock.md)); why Windows rarely shows it (timing, **inferred**).
