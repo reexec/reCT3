@@ -38,7 +38,7 @@ CT3는 CRI의 사운드·스트리밍 미들웨어를 정적 링크한다. 이 �
 
 ## 4. 미확정
 
-* Linux 플레이 중 음악이 한 구간을 반복하는 증상(issue #29)이 이 경합 때문인지. 어댑터를 넣은 빌드로 사용자 플레이에서 확인한다.
+* Linux 플레이 중 음악이 한 구간을 반복하는 증상(issue #29). 어댑터로는 없어지지 않았다. 반복이 시작되면 48 kHz 음악 출력 버퍼가 바뀌지 않고 `ADX0.AFS` 읽기가 멈추며, 모든 스레드는 살아 있다(**확인됨**, [작업 로그 i029](../work-logs/20261027-i029-adxm-lock.md)). 서버 세 개(vsync 스레드의 레벨 2, mwidle 스레드의 레벨 5, thread 8의 파일 서버 `000B9860`)가 호스트에서 동시에 도는 것이 원인 후보다(**추정**).
 * Windows에서 같은 증상이 드문 이유(타이밍 차이로 **추정**).
 
 ---
@@ -61,4 +61,4 @@ ADXXTL `Ver.4531`, ADXXB `Ver.1.38`, ADXT/XB `Ver.7.95` and WXCI/XB `Ver.1.40`, 
 
 ## 4. Unresolved
 
-Whether the music repeating one section during play on Linux (issue #29) comes from this contention, to be checked in user play with the adapter build; why Windows rarely shows it (timing, **inferred**).
+The music repeating one section during play on Linux (issue #29): the adapter did not remove it; once it starts, the 48 kHz music output buffer stops changing and the `ADX0.AFS` reads stop while every thread is alive (**confirmed**, [work log i029](../work-logs/20261027-i029-adxm-lock.md)), and the three servers (level 2 on the vsync thread, level 5 on the mwidle thread, the file server `000B9860` on thread 8) running in parallel on the host are the candidate cause (**inferred**); why Windows rarely shows it (timing, **inferred**).
