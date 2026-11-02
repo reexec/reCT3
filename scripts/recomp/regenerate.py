@@ -12,12 +12,18 @@ still be given on the command line (--help).
     python scripts/recomp/regenerate.py --xbe <path> --variant ct3_jp
 """
 
+import os
+import pathlib
 import sys
 
 import lifter
 
 ROOT = lifter.ROOT
 TITLE = ROOT / "src" / "game" / "ct3"
+# Linux trees: build/<preset>, or $RECT3_BUILD_DIR/<preset> (scripts/build_linux.sh).
+LINUX_TREES = [pathlib.Path(base) / f"linux-{arch}-{config}"
+               for base in filter(None, [os.environ.get("RECT3_BUILD_DIR"), ROOT / "build"])
+               for arch in ("x64", "x86") for config in ("release", "debug")]
 
 if __name__ == "__main__":
     sys.exit(lifter.run(
@@ -31,6 +37,6 @@ if __name__ == "__main__":
             ROOT / "build" / "win32_x86" / "third_party" / "rexbox" / "tools" / "Release" / "rexbox_xdk_symbols.exe",
             ROOT / "build" / "win32_x86" / "third_party" / "rexbox" / "tools" / "Debug" / "rexbox_xdk_symbols.exe",
             ROOT / "build" / "third_party" / "rexbox" / "tools" / "rexbox_xdk_symbols",
-        ],
+        ] + [tree / "third_party" / "rexbox" / "tools" / "rexbox_xdk_symbols" for tree in LINUX_TREES],
         root=ROOT,
     ))

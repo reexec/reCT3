@@ -16,7 +16,7 @@ flowchart TD
     APP --> HLE["rexbox HLE: kernel, xapi, d3d8, dsound, xinput"]
     GAME --> RT["rexbox runtime: guest memory, XBE loader, HLE registry, recomp ABI"]
     HLE --> RT
-    RT --> PLAT["rexbox platform: win32 (SDL3 + OpenGL)"]
+    RT --> PLAT["rexbox platform: win32, linux (SDL3 + OpenGL)"]
 ```
 
 * **rexbox**(`third_party/rexbox`, submodule)는 타이틀에 의존하지 않는 재사용 가능한 Xbox 런타임입니다. reJSRF에서 만들어져 분리되었고, 두 프로젝트가 공유합니다.
@@ -37,13 +37,28 @@ cd reCT3
 
 자세한 절차: [Win32 개발 환경 준비와 빌드](docs/guides/win32-setup-and-build.md)
 
+## 빌드 (Linux)
+
+```bash
+git clone --recurse-submodules https://github.com/reexec/reCT3.git
+cd reCT3
+# roms/ 에 게임 파일을 두고, 처음 한 번 재컴파일 코드를 만든다(python3-capstone 필요)
+cmake --preset linux-x64-release && cmake --build --preset linux-x64-release --target rexbox_xdk_symbols
+python3 scripts/recomp/regenerate.py
+scripts/build_linux.sh x64 release     # configure + build + ctest (x86: scripts/build_linux.sh x86 release)
+build/linux-x64-release/src/app/rect3 roms
+```
+
+자세한 절차(필요한 패키지, x86, WSL2): [Linux 개발 환경 준비, 빌드, 실행](docs/guides/linux-setup-and-build.md)
+
 ## 플랫폼 상태
 
 | 플랫폼 | 상태 |
 |---|---|
 | Win32 x86 | 빌드됨(게임 없이). rexbox probe 통과 |
 | Win64 | 예정 |
-| Linux x86 / x64 | 빌드되고 어트랙트 데모까지 실행됨(WSL2 Ubuntu 24.04, GCC 13; [가이드](docs/guides/linux-setup-and-build.md)). 실기 확인 예정 |
+| Linux x64 | 재컴파일 코드 생성, 빌드, CTest 7/7, 어트랙트 데모 실행(실기 Ubuntu 26.04, GCC 15.2, RTX 4090: 3D 데모 약 59 fps; WSL2 Ubuntu 24.04, GCC 13; [가이드](docs/guides/linux-setup-and-build.md)) |
+| Linux x86 | 빌드되고 어트랙트 데모까지 실행됨(WSL2 Ubuntu 24.04, GCC 13). 실기 확인 예정 |
 | Web (wasm32) | 예정 |
 | Android | 예정 |
 
@@ -79,9 +94,13 @@ See the diagram above. **rexbox** (`third_party/rexbox`, a submodule) is the reu
 
 See the commands above, and [Win32 development setup and build](docs/guides/win32-setup-and-build.md) for the full procedure. The argument is the **game directory** extracted from the disc; the app serves it as the game's `D:`, loads `default.xbe` (or the file `--xbe` names) and identifies it by its certificate: the registered Japan build runs, anything else stops.
 
+## Build (Linux)
+
+See the commands above: with the game files under `roms/`, build `rexbox_xdk_symbols`, generate the recompiled code once with `regenerate.py` (`python3-capstone` needed), then `scripts/build_linux.sh x64 release` (or `x86`) configures, builds and runs CTest, and `build/linux-x64-release/src/app/rect3 roms` starts the game. The packages, the x86 build and WSL2 are in [Linux development setup, build and run](docs/guides/linux-setup-and-build.md).
+
 ## Platform status
 
-Win32 x86 builds (without a game) and the rexbox probes pass; Linux x86 and x64 build and run to the attract demo (WSL2 Ubuntu 24.04, GCC 13; [guide](docs/guides/linux-setup-and-build.md)), with a Linux machine still to be checked; Win64, the web (wasm32) and Android are planned.
+Win32 x86 builds (without a game) and the rexbox probes pass; on Linux x64 the recompiled code is generated, the game builds, CTest passes 7/7 and the attract demo runs (a Linux machine with Ubuntu 26.04, GCC 15.2 and an RTX 4090, the 3D demo at about 59 fps, and WSL2 Ubuntu 24.04 with GCC 13; [guide](docs/guides/linux-setup-and-build.md)); Linux x86 builds and runs to the attract demo on WSL2, with a Linux machine still to be checked; Win64, the web (wasm32) and Android are planned.
 
 ## Contributing and working rules
 

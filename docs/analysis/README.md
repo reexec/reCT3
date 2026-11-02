@@ -11,6 +11,7 @@
 ## 문서
 
 * [CT3 XBE 개요: 빌드 변형, 섹션, XDK 라이브러리, 커널 import (XBE 준비 전 자리)](ct3-xbe-overview.md)
+* [CRI 미들웨어: ADXM 스레드와 SVM 잠금](cri-middleware.md)
 
 ---
 
@@ -27,3 +28,4 @@ Labels:
 ## Documents
 
 * [CT3 XBE overview: build variants, sections, XDK libraries, kernel imports (placeholder until the XBE is in hand)](ct3-xbe-overview.md)
+* [CRI middleware: the ADXM threads and the SVM lock](cri-middleware.md)
