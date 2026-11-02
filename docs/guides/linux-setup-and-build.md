@@ -82,7 +82,7 @@ REXBOX_DISPLAY=hidden REXBOX_AUDIO=none REXBOX_WATCHDOG=100 REXBOX_D3D8_PROFILE=
   ~/reCT3/build/linux-x64-release/src/app/rect3 ~/reCT3/roms
 ```
 
-인자는 게임 디렉터리다(위 예는 저장소를 `~/reCT3`에 받은 경우). 게임의 HDD는 현재 폴더의 `hdd/`에 만들어지고 `RECT3_HDD_ROOT`로 바꾼다. 설정은 실행 파일 옆 `rect3.ini`에 저장된다. 환경 변수(`REXBOX_*`), 창 조작, 설정 메뉴는 Win32와 같다([rexbox ARCHITECTURE §5](../../third_party/rexbox/ARCHITECTURE.md)). 처음 실행에서는 타이틀이 캐시 파티션(`hdd/Partition5`)을 채우느라 데모 시작이 늦다. `REXBOX_SAMPLE`(샘플링 프로파일러)은 Linux에서 거부된다.
+인자는 게임 디렉터리다(위 예는 저장소를 `~/reCT3`에 받은 경우). 게임의 HDD는 현재 폴더의 `hdd/`에 만들어지고 `RECT3_HDD_ROOT`로 바꾼다. 설정은 실행 파일 옆 `rect3.ini`에 저장된다. 환경 변수(`REXBOX_*`), 창 조작, 설정 메뉴는 Win32와 같다([rexbox ARCHITECTURE §5](../../third_party/rexbox/ARCHITECTURE.md)). 처음 실행에서는 타이틀이 캐시 파티션(`hdd/Partition5`)을 채우느라 데모 시작이 늦다. `REXBOX_SAMPLE`(샘플링 프로파일러)은 Linux에서 거부된다. 음악이 한 구간을 반복하면(issue #29) 로그에 `[dsound] buffer ... its writer stopped`와 스레드 상태, 호스트 콜스택(`[stack]`)이 남는다. 그 로그를 issue에 붙인다.
 
 ## 7. WSL2
 
@@ -128,7 +128,7 @@ Configure the preset and build `rexbox_xdk_symbols` first (`cmake --preset linux
 
 ## 6. Run
 
-Run from a directory of your own with the game directory as the argument, as in section 6 above: the game's hard disk is created under `hdd/` in the current directory (`RECT3_HDD_ROOT` moves it), and settings are saved in `rect3.ini` next to the executable; `REXBOX_DISPLAY=hidden REXBOX_AUDIO=none REXBOX_WATCHDOG=100` gives a diagnostic run without a window. The `REXBOX_*` variables, the window and the settings menu are the same as on Win32 ([rexbox ARCHITECTURE section 5](../../third_party/rexbox/ARCHITECTURE.md)). On the first run the title fills the cache partition (`hdd/Partition5`), which delays the demo. `REXBOX_SAMPLE` (the sampling profiler) is refused on Linux.
+Run from a directory of your own with the game directory as the argument, as in section 6 above: the game's hard disk is created under `hdd/` in the current directory (`RECT3_HDD_ROOT` moves it), and settings are saved in `rect3.ini` next to the executable; `REXBOX_DISPLAY=hidden REXBOX_AUDIO=none REXBOX_WATCHDOG=100` gives a diagnostic run without a window. The `REXBOX_*` variables, the window and the settings menu are the same as on Win32 ([rexbox ARCHITECTURE section 5](../../third_party/rexbox/ARCHITECTURE.md)). On the first run the title fills the cache partition (`hdd/Partition5`), which delays the demo. `REXBOX_SAMPLE` (the sampling profiler) is refused on Linux. When the music repeats one stretch (issue #29), the log gets `[dsound] buffer ... its writer stopped` with the thread states and host stacks (`[stack]`); attach that log to the issue.
 
 ## 7. WSL2
 
