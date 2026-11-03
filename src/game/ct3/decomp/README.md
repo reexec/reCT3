@@ -5,7 +5,7 @@
 | 파일 | 함수 | 근거 |
 |---|---|---|
 | `d3dx_matrix.c` | `000E4B73` D3DXVec4Transform, `000E4BB9` D3DXMatrixMultiply, `000E4CB7` D3DXMatrixInverse(정체는 **추정**) | issue #27, [분석](../../../../docs/analysis/d3dx-matrix.md) |
-| `adxm_lock.c` | `000B2FF0` ADXM lock 콜백, `000B3030` unlock 콜백(lift 본문을 호스트 잠금으로 감쌈), `000BB9C0` 잠금 모두 풀기(이 스레드의 깊이만큼). 디컴파일이 아니라 호스트 동시성 어댑터 | issue #29, [분석](../../../../docs/analysis/cri-middleware.md) |
+| `adxm_lock.c` | `000B2FF0` ADXM lock 콜백, `000B3030` unlock 콜백(lift 본문을 호스트 잠금으로 감쌈), `000BB9C0` 잠금 모두 풀기(이 스레드의 깊이만큼), `000B9540` 레벨 2 서버 실행과 `000B7EE0` SJ 링 리셋(같은 호스트 잠금 아래). 디컴파일이 아니라 호스트 동시성 어댑터 | issue #29, #42, [분석](../../../../docs/analysis/cri-middleware.md), [설계 i042](../../../../docs/design/20261103-i042-cri-server-lock.md) |
 | `sj_lock.c` | `000BC950`/`000BC970` CRI SJ 임계 구역(lift 본문을 호스트 잠금으로 감쌈). 디컴파일이 아니라 호스트 동시성 어댑터 | issue #29, [설계](../../../../docs/design/20261103-i029-sj-lock.md) |
 
 이 디렉터리의 파일을 더하거나 바꾸면 `regenerate.py`를 다시 돌리고, `rect3_decomp_check`에 경우를 더한다.

@@ -134,3 +134,39 @@ void sub_000BB9C0(void)
     g_eax = released;
     g_esp += 4; /* ret: a lifted callee pops its return address */
 }
+
+/* The level-2 server pass and the SJ ring reset (issue #42,
+ * docs/design/20261103-i042-cri-server-lock.md).
+ *
+ * On the Xbox the vsync thread's server pass (ADX decode and output, the AIX
+ * demultiplexer) ran above the game thread's priority, so a game call never
+ * landed inside it. The stop paths count on that: ADXT's stop
+ * (0x000B1700) leaves its SVM lock and then resets the input SJ through its
+ * vtable (SJRBF reset 0x000B7EE0, which takes no SJ section). On the host the
+ * reset can come while the ADX decoder holds a chunk of that ring; the
+ * decoder's PutChunk then overfills the free lane and its UngetChunk fails
+ * with -3 into the SJ error callback, CRI's `jmp $` trap (0x000B7E20), inside
+ * the SJ section, so the game waits for that lock for ever. Both run here
+ * under the ADXM host lock: a reset waits for the pass to end. Only level 2:
+ * the level-5 pass runs on the ADXM safe thread, which the lock callbacks
+ * resume and suspend, and holding the lock there starved other streams. */
+
+extern void sub_000B9540_gen(void);
+extern void sub_000B7EE0_gen(void);
+
+/* 0x000B9540, cdecl: void (void). Runs the level-2 servers (SVM 0x000B94E0(2)). */
+void sub_000B9540(void)
+{
+    rexbox_guest_lock_enter(&g_adxm_lock);
+    sub_000B9540_gen();
+    rexbox_guest_lock_leave(&g_adxm_lock);
+}
+
+/* 0x000B7EE0, cdecl: void (SJRBF* sj). Empties the ring: no data, all free,
+ * both positions 0. */
+void sub_000B7EE0(void)
+{
+    rexbox_guest_lock_enter(&g_adxm_lock);
+    sub_000B7EE0_gen();
+    rexbox_guest_lock_leave(&g_adxm_lock);
+}
