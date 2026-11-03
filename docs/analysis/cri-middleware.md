@@ -39,13 +39,23 @@ CT3는 CRI의 사운드·스트리밍 미들웨어를 정적 링크한다. 이 �
 ## 4. SJ 임계 구역 (**확인됨**)
 
 * SJ 링 함수(SJRBF GetChunk·PutChunk 등, `000B7E80`~`000B82C0`, `000B9A20`~`000B9FC0`)는 모두 `000BC950`에 들어가 `000BC970`(꼬리 점프)으로 나온다. 이 빌드에서 둘은 전역 `[0x2E05F0]`만 읽고 쓰는 빈 임계 구역이다.
-* SJ 링 객체: `+0x00` vtable(`0x210478`), `+0x0C`·`+0x10` 레인 0(빈 공간)·레인 1(데이터) 바이트 수, `+0x14`·`+0x18` 두 레인의 위치, `+0x1C` 버퍼, `+0x20` 크기, `+0x28` 오류 콜백(`000B7E20`), `+0x2C` 인자(**추정**: `PutChunk` `000B8120`의 사용으로 읽음).
-* `PutChunk`는 돌려받은 조각이 레인 위치와 이어지지 않으면 오류 −3을 알리고 조각을 버린다.
+* SJ 링 객체: `+0x00` vtable(`0x210478`), `+0x0C` 레인 1(데이터) 바이트 수, `+0x10` 레인 0(빈 공간) 바이트 수, `+0x14`·`+0x18` 레인 0·1의 위치, `+0x1C` 버퍼, `+0x20` 크기, `+0x24` 끝을 넘는 여분, `+0x28` 오류 콜백(기본은 `000B7E20`), `+0x2C` 그 인자. 레인과 수의 짝은 리셋 `000B7EE0`(데이터 0, 빈 공간 = 크기, 위치 0)과 GetChunk에서 읽었다(이전 판은 `+0x0C`·`+0x10`을 반대로 적었다).
+* 연산(lift 코드에서 읽음): GetChunk `000B7F40`(레인에서 조각을 떼고 그 레인 수를 줄임), PutChunk `000B8030`(조각을 다른 레인 수에 더함), UngetChunk `000B8120`(조각을 같은 레인에 되돌림; 조각 끝이 레인 위치와 맞지 않으면 오류 콜백에 −3), 리셋 `000B7EE0`(vtable로만 불림, **SJ 구간에 들어가지 않음**), 파괴 `000B7E80`, 생성 `000B82C0`(풀 `0x3448A0`~`0x3478D4`에서 빈 칸을 찾음).
+* 기본 오류 콜백 `000B7E20`은 `jmp $`(CRI의 오류 트랩)다. 오류가 나면 그 스레드는 영원히 돈다.
 * 호스트에서 파일 서버(thread 8)와 ADX 서버(vsync 스레드)가 음악의 입력 링을 동시에 고치면 바이트가 새고 스트림이 멈춘다(issue #29의 원인). 대응: [설계 i029 SJ 잠금](../design/20261103-i029-sj-lock.md), `src/game/ct3/decomp/sj_lock.c`.
 
-## 5. 미확정
+## 5. 서버 실행과 정지 경로 (**확인됨**, issue #42의 임시 계측)
+
+* vsync 스레드의 레벨 2 서버 실행(`000B9540` → SVM 서버 실행기 `000B94E0(2)`)은 `000B35E0`(ADX 서버 `000B1AE0` → `000B5060` → 디코더 `000B4A70`, 출력 단계 `000B5950` → `000B7420` → `000B72A0` → `000B6AA0`)와 `000B35C0`(`000B5C30`, AIX 서버 `000B9830` → `000BD050` → AIX 분리 `000BCDB0`)을 돈다. 이 경로들은 SVM 잠금을 잡지 않는다. Xbox에서는 우선순위로 게임 스레드보다 위에서 돌아, 게임 호출이 서버 실행 도중에 끼어들지 못했다.
+* ADXT 정지 `000B1700`은 `000B16A0` 안에서 SVM 잠금을 잡았다 놓은 **뒤에** 입력 링을 리셋한다(`0x000B1728`, vtable `+0x14`).
+* 호스트에서는 디코더가 입력 링 `0x003448A0`에서 조각을 쥔 사이에 게임 메인 스레드의 정지가 그 링을 리셋했다. 디코더의 PutChunk가 빈 공간을 크기보다 크게 만들고, UngetChunk가 −3으로 `000B7E20` 트랩에 들어간다. 트랩은 SJ 구간 안이라 SJ 잠금을 쥔 채 멈추고, 그 잠금을 기다리는 게임 메인 스레드도 멈춘다(로딩 화면 멈춤, issue #42). AIX 분리 `000BCDB0`에도 같은 꼴의 트랩(`000BCFA0`, `000BCFA2`)이 있다. 대응: [설계 i042](../design/20261103-i042-cri-server-lock.md).
+* 레벨 5 서버 실행(`000B9550`, mwidle 스레드)을 ADXM 잠금으로 감싸면 다른 스트림이 멈췄다(54번 중 16번). mwidle은 ADXM 잠금 콜백이 깨우고 재우는 스레드다.
+* 영상 구간의 null 간접 호출(`000C9630`, 반환 `000C967E`): SVM 잠금(`000C5CA0`/`000C5CB0`) 안에서 사용 중인 슬롯(`[slot+0x14]`)의 객체 vtable이 0이다. CRI의 다른 경합으로 **추정**, 원인 미확인.
+
+## 6. 미확정
 
 * SJ 잠금이 플레이에서도 음악 반복을 없애는지(데모 대조 실험에서는 없어짐, [작업 로그 i029](../work-logs/20261027-i029-adxm-lock.md)).
+* `000C967E`의 null 간접 호출의 원인.
 * Windows에서 같은 증상이 드문 이유(타이밍 차이로 **추정**).
 
 ---
@@ -68,8 +78,12 @@ ADXXTL `Ver.4531`, ADXXB `Ver.1.38`, ADXT/XB `Ver.7.95` and WXCI/XB `Ver.1.40`, 
 
 ## 4. SJ critical section (**confirmed**)
 
-Every SJ ring function (the SJRBF GetChunk, PutChunk and friends, `000B7E80`–`000B82C0`, `000B9A20`–`000B9FC0`) enters `000BC950` and leaves through `000BC970` (a tail jump), an empty critical section in this build that only reads and writes the global `[0x2E05F0]`. An SJ ring object: `+0x00` vtable (`0x210478`), `+0x0C`/`+0x10` the byte counts of lane 0 (free) and lane 1 (data), `+0x14`/`+0x18` the two lanes' positions, `+0x1C` the buffer, `+0x20` its size, `+0x28` the error callback (`000B7E20`), `+0x2C` its argument (**inferred** from `PutChunk` `000B8120`'s use). `PutChunk` reports error −3 and drops a returned chunk that no longer meets its lane's position. On the host the file server (thread 8) and the ADX server (the vsync thread) updating the music's input ring together leak its bytes until the stream stops (the cause of issue #29). Remedy: [design i029 SJ lock](../design/20261103-i029-sj-lock.md), `src/game/ct3/decomp/sj_lock.c`.
+Every SJ ring function (the SJRBF GetChunk, PutChunk and friends, `000B7E80`–`000B82C0`, `000B9A20`–`000B9FC0`) enters `000BC950` and leaves through `000BC970` (a tail jump), an empty critical section in this build that only reads and writes the global `[0x2E05F0]`. An SJ ring object: `+0x00` vtable (`0x210478`), `+0x0C` the byte count of lane 1 (data), `+0x10` that of lane 0 (free), `+0x14`/`+0x18` the positions of lanes 0 and 1, `+0x1C` the buffer, `+0x20` its size, `+0x24` the overrun margin, `+0x28` the error callback (by default `000B7E20`), `+0x2C` its argument; the pairing of lanes and counts is read from the reset `000B7EE0` (no data, all free, positions 0) and GetChunk (the earlier revision had `+0x0C`/`+0x10` the other way round). Operations (read from the lifted code): GetChunk `000B7F40` (takes a chunk from a lane and lowers its count), PutChunk `000B8030` (adds a chunk to the other lane's count), UngetChunk `000B8120` (returns a chunk to its lane; −3 to the error callback when the chunk's end does not meet the lane's position), reset `000B7EE0` (called only through the vtable, **outside any SJ section**), destroy `000B7E80`, create `000B82C0` (finds a free slot in the pool `0x3448A0`–`0x3478D4`). The default error callback `000B7E20` is `jmp $`, CRI's error trap: the thread that hits an error spins for ever. On the host the file server (thread 8) and the ADX server (the vsync thread) updating the music's input ring together leak its bytes until the stream stops (the cause of issue #29). Remedy: [design i029 SJ lock](../design/20261103-i029-sj-lock.md), `src/game/ct3/decomp/sj_lock.c`.
 
-## 5. Unresolved
+## 5. Server passes and the stop path (**confirmed**, issue #42's temporary instrumentation)
 
-Whether the SJ lock removes the music repeat in play too (it did in the demo comparison, [work log i029](../work-logs/20261027-i029-adxm-lock.md)); why Windows rarely shows it (timing, **inferred**).
+The vsync thread's level-2 server pass (`000B9540` → the SVM server executor `000B94E0(2)`) runs `000B35E0` (the ADX server `000B1AE0` → `000B5060` → the decoder `000B4A70`, and the output stage `000B5950` → `000B7420` → `000B72A0` → `000B6AA0`) and `000B35C0` (`000B5C30`, and the AIX server `000B9830` → `000BD050` → the AIX demultiplexer `000BCDB0`), none of which takes the SVM lock; on the Xbox it ran above the game thread, so no game call landed inside a pass. ADXT's stop `000B1700` resets the input ring (`0x000B1728`, vtable `+0x14`) **after** leaving the SVM lock it took in `000B16A0`. On the host the game's stop reset the input ring `0x003448A0` while the decoder held a chunk of it: the decoder's PutChunk made the free lane larger than the ring and its UngetChunk went with −3 into the `000B7E20` trap, inside the SJ section, so it held the SJ lock for ever and the game's main thread waiting for it stopped (the loading-screen hang, issue #42); the AIX demultiplexer `000BCDB0` has traps of the same kind (`000BCFA0`, `000BCFA2`). Remedy: [design i042](../design/20261103-i042-cri-server-lock.md). Putting the level-5 pass (`000B9550`, the mwidle thread, which the ADXM lock callbacks resume and suspend) under the ADXM lock stopped other streams (16 of 54 runs). The null indirect call in the movie (`000C9630`, returning to `000C967E`): inside the SVM lock (`000C5CA0`/`000C5CB0`) an active slot's object (`[slot+0x14]`) has a null vtable; another CRI race, **inferred**, cause unknown.
+
+## 6. Unresolved
+
+Whether the SJ lock removes the music repeat in play too (it did in the demo comparison, [work log i029](../work-logs/20261027-i029-adxm-lock.md)); the cause of the null indirect call at `000C967E`; why Windows rarely shows it (timing, **inferred**).
