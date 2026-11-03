@@ -22,6 +22,8 @@ sudo apt-get install -y build-essential cmake ninja-build git python3 python3-ca
   libxfixes-dev libxkbcommon-dev libwayland-dev libdecor-0-dev libdrm-dev libgbm-dev libgl-dev libegl-dev
 # x86 (-m32) 빌드라면 추가로 같은 개발 패키지의 i386 판:
 sudo dpkg --add-architecture i386 && sudo apt-get update
+# 먼저: glib 2.80.0-6ubuntu3.10의 개발 파일이 i386 python3를 요구해 apt가 멈추는 것을 막는다(#39)
+sudo apt-get install -y libglib2.0-dev-bin qemu-user
 sudo apt-get install -y gcc-multilib g++-multilib \
   libasound2-dev:i386 libpulse-dev:i386 libx11-dev:i386 libxext-dev:i386 libxcursor-dev:i386 libxi-dev:i386 \
   libxrandr-dev:i386 libxss-dev:i386 libxtst-dev:i386 libxfixes-dev:i386 libxkbcommon-dev:i386 libwayland-dev:i386 \
@@ -29,6 +31,7 @@ sudo apt-get install -y gcc-multilib g++-multilib \
 ```
 
 * SDL3는 X11 확장(XScrnSaver, XTest 등)의 개발 패키지가 없으면 configure에서 `Couldn't find dependency package for XSCRNSAVER`처럼 멈춘다. 그 이름의 패키지(x86이면 `:i386`)를 설치한다.
+* i386 목록을 설치할 때 `libglib2.0-dev:i386 : Depends: libglib2.0-dev-bin:i386 … held broken packages`로 멈추면, 앞의 선행 설치(`libglib2.0-dev-bin qemu-user`)를 빠뜨린 것이다. glib 2.80.0-6ubuntu3.10의 개발 파일은 `python3 | qemu-user | qemu-user-static`에 의존한다. i386 패키지에서 이 `python3`는 i386 `python3`라서, 설치된 amd64 Python과 충돌한다(rexbox #46).
 * 창 표시에는 OpenGL 3.3 이상이 필요하다.
 * `capstone`은 재컴파일 파이프라인(disasm 단계)이 쓴다. Ubuntu 24.04 이후의 시스템 Python에는 `pip install`이 막혀 있으므로 apt의 `python3-capstone`을 쓴다. 가상 환경을 쓰려면 `python3 -m venv .venv && .venv/bin/pip install capstone` 뒤 `.venv/bin/python`으로 스크립트를 실행한다.
 * 직접 소유한 Crazy Taxi 3: High Roller(일본판) 디스크의 덤프가 필요하다.
@@ -108,7 +111,7 @@ Generates the recompiled code, builds and runs the game on Linux x64 and x86 (-m
 
 ## 1. Requirements
 
-The apt packages above, `python3-capstone` included (the x86 build adds the i386 architecture, `gcc-multilib`/`g++-multilib` and the `:i386` versions of the development packages). SDL3 stops at configure when an X11 extension's development package is missing (`Couldn't find dependency package for XSCRNSAVER` and the like): install that package (`:i386` for x86). A window needs OpenGL 3.3 or newer. `capstone` is used by the recompilation pipeline (the disasm stage); the system Python of Ubuntu 24.04 and later refuses `pip install`, so take apt's `python3-capstone`, or use a virtual environment (`python3 -m venv .venv && .venv/bin/pip install capstone`, then run the scripts with `.venv/bin/python`). A dump of a Crazy Taxi 3: High Roller (Japan) disc you own is needed.
+The apt packages above, `python3-capstone` included (the x86 build adds the i386 architecture, `gcc-multilib`/`g++-multilib` and the `:i386` versions of the development packages, after installing the amd64 `libglib2.0-dev-bin` and `qemu-user` first: glib 2.80.0-6ubuntu3.10's development files depend on `python3 | qemu-user | qemu-user-static`, which for an i386 package means `python3:i386`, and without that step apt stops with `libglib2.0-dev:i386 : Depends: libglib2.0-dev-bin:i386 … held broken packages`; rexbox #46, issue #39). SDL3 stops at configure when an X11 extension's development package is missing (`Couldn't find dependency package for XSCRNSAVER` and the like): install that package (`:i386` for x86). A window needs OpenGL 3.3 or newer. `capstone` is used by the recompilation pipeline (the disasm stage); the system Python of Ubuntu 24.04 and later refuses `pip install`, so take apt's `python3-capstone`, or use a virtual environment (`python3 -m venv .venv && .venv/bin/pip install capstone`, then run the scripts with `.venv/bin/python`). A dump of a Crazy Taxi 3: High Roller (Japan) disc you own is needed.
 
 ## 2. Getting the repository
 
