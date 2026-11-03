@@ -27,6 +27,16 @@
 * 30 fps 고정과 게임 속도 0.5배에 이르려면 바쁜 시간을 몇 ms 더 줄여야 한다. rexbox 작업 로그의 다음 후보를 보라.
 * 측정이 바깥 부하(다른 프로젝트 빌드, VS Code 색인·업데이트)에 크게 흔들렸다. 그런 구간의 실행은 버렸다.
 
+## 2차 (2026-11-03, 브랜치 `i020-draw-cpu-cost-2`, rexbox v0.0.20)
+
+rexbox [작업 로그 i023 2차](../../third_party/rexbox/docs/work-logs/20261021-i023-draw-cpu-cost.md)와 [설계 i023 미리 올리기](../../third_party/rexbox/docs/design/20261103-i023-program-warmup.md). 기계: Ryzen 5 5600X, RTX 4090.
+
+* 이 기계에서 꾸준한 운전은 60 fps다(기준 v0.0.12와 같음, `other` 2.4~2.7 ms). SJ 잠금(#29)은 영향이 없다. 처음에 30 fps로 보였던 것은 rexbox의 긴 프레임 진단이 매 프레임 stderr에 써서 생긴 것이었다. 진단을 고쳤다.
+* 재생성을 잊으면 decomp 대체가 링크되지 않는다. 10-29의 `gen/`으로 빌드하면 `sj_lock.c`가 빠진 채 링크됐다(map 파일로 확인). main으로 옮길 때는 늘 재생성한다.
+* 끊김은 운전이 시작되는 몇 초에 몰린다. rexbox v0.0.20의 프로그램 미리 올리기로 장면 시작의 캐시 프로그램 74개가 40~42 ms에서 4~5 ms로 줄었다. 최악 프레임은 58~61 ms에서 50~51 ms가 됐다(켬/끔 번갈아 3쌍). 부팅 구간 fps는 같다.
+* 검증: Win32 x86 Release 경고 0(생성 코드의 기존 D9025 제외), CTest 7/7.
+* 남은 것: 운전 시작의 텍스처 업로드(112개 15 ms, 가끔 56 ms), 카메라 도입부의 그리기 1000~1500개 프레임. 미리 올리기를 표시 스레드에서 파일을 읽게 했던 첫 시험 실행이 `000C967E`의 null 간접 호출로 한 번 멈췄다(부팅 타이밍이 흔들린 실행, #18 계열로 **추정**).
+
 ---
 
 # Work log: driving — the CPU cost of one D3D8 draw, first pass (issue #20)
@@ -54,3 +64,5 @@ Left over:
 
 * A steady 30 fps (game at 0.5×) needs a few more ms off the busy time; see the rexbox work log for the next candidates.
 * Measurements swung widely with outside load (another project's build, VS Code indexing and an update); runs from those spans were discarded.
+
+Second pass (2026-11-03, branch `i020-draw-cpu-cost-2`, rexbox v0.0.20; see rexbox's [i023 work log](../../third_party/rexbox/docs/work-logs/20261021-i023-draw-cpu-cost.md) and the [warming design](../../third_party/rexbox/docs/design/20261103-i023-program-warmup.md); Ryzen 5 5600X, RTX 4090): steady driving runs at 60 fps on this machine, as v0.0.12 does (`other` 2.4–2.7 ms), and the SJ lock (#29) costs nothing; the 30 fps first seen came from rexbox's long-frame diagnostic writing to stderr each frame, now fixed. A build without regeneration leaves the decomp replacements out (built on the 10-29 `gen/`, `sj_lock.c` was not linked, as the map file showed), so moving to a new main always regenerates. Hitches gather in the first seconds of driving; with v0.0.20's program warming the 74 cached programs at the scene start went from 40–42 ms to 4–5 ms and the worst frame from 58–61 ms to 50–51 ms (three alternating on/off pairs), boot fps unchanged. Verification: Win32 x86 Release with 0 warnings (apart from the generated code's existing D9025), CTest 7/7. Left over: the texture uploads at the start of driving (112 in 15 ms, sometimes 56 ms) and the camera-intro frames of 1000–1500 draws; a first trial run in which warming read files on the presenting thread stopped once on a null indirect call at `000C967E` (boot timing disturbed; **inferred** to be of #18's family).
