@@ -49,7 +49,7 @@ rexbox v0.0.23으로 올린 뒤(#41), 숨긴 어트랙트 데모 6개 동시 실
 
 * 재생성, Win32 x86 Release 빌드, CTest.
 * 계측 없는 최종 빌드로 숨긴 어트랙트 데모 6개 동시 실행 4묶음(24번) 이상을 돌린다.
-* null 호출·음악 멈춤·다른 스트림 멈춤·stall·잠금 시한을 수정 전과 비교한다. 수정 전 v0.0.23에서는 계측 포함 84번 가운데 null 호출이 6번이었다.
+* null 호출·음악 멈춤·다른 스트림 멈춤·stall·잠금 시한을 수정 전과 비교한다. 수정 전 v0.0.23에서는 계측 포함 42번 가운데 null 호출이 6번이었다.
 * 운전 진입도 확인한다.
 
 ---
@@ -105,5 +105,5 @@ The runs went on. The same 24 runs on a v0.0.21 build logged none, but that samp
 
 * Regeneration, Win32 x86 Release build, CTest.
 * At least 4 batches (24 runs) of six hidden attract demos in parallel with the final build without instrumentation.
-* Compare null calls, music stops, other stream stops, stalls and lock timeouts with the runs before the fix. Before the fix, v0.0.23 showed 6 null calls in 84 runs, instrumented ones included.
+* Compare null calls, music stops, other stream stops, stalls and lock timeouts with the runs before the fix. Before the fix, v0.0.23 showed 6 null calls in 42 runs, instrumented ones included.
 * Check a drive into gameplay.
