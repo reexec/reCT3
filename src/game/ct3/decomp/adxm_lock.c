@@ -170,3 +170,21 @@ void sub_000B7EE0(void)
     sub_000B7EE0_gen();
     rexbox_guest_lock_leave(&g_adxm_lock);
 }
+
+extern void sub_000B2A90_gen(void);
+
+/* 0x000B2A90, cdecl: void (ADXF handle) -- ADXF Close.
+ *
+ * Calls the stop sub_000B2640 (which takes the SVM lock) only while the state
+ * is 2 (reading), then zeroes the whole 0x138-byte object with no lock. The
+ * file server's sub_000B2730 pass sets the state to 3/4 and then reads +8
+ * twice under the SVM lock, so a Close on another thread could zero the object
+ * between the two reads (issue #44, docs/design/20261106-i044-adxt-stop-lock.md).
+ * Under the host lock a Close waits for the pass, and sub_000B2640's SVM lock
+ * re-enters it. */
+void sub_000B2A90(void)
+{
+    rexbox_guest_lock_enter(&g_adxm_lock);
+    sub_000B2A90_gen();
+    rexbox_guest_lock_leave(&g_adxm_lock);
+}
