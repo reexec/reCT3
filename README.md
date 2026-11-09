@@ -21,7 +21,7 @@ flowchart TD
 
 * **rexbox**(`third_party/rexbox`, submodule)는 타이틀에 의존하지 않는 재사용 가능한 Xbox 런타임입니다. reJSRF에서 만들어져 분리되었고, 두 프로젝트가 공유합니다.
 * **game/ct3**는 원본 x86 코드를 C로 옮긴 재컴파일 코드(로컬 생성)와, 그것을 함수 단위로 대체하는 디컴파일 코드, 타이틀 프로파일을 담습니다.
-* **xboxrecomp**(`third_party/xboxrecomp`, submodule)는 upstream v0.15.0입니다. 재컴파일 파이프라인과 lifter ABI 헤더가 여기서 옵니다.
+* **xboxrecomp**(`third_party/xboxrecomp`, submodule)는 upstream v0.17.0입니다. 재컴파일 파이프라인과 lifter ABI 헤더가 여기서 옵니다.
 * 자세한 내용: [ARCHITECTURE.md](ARCHITECTURE.md), [설계 i001](docs/design/20261020-i001-project-bootstrap.md), [프로젝트 헌장](docs/PROJECT_CHARTER.md)
 
 ## 빌드 (Win32)
@@ -88,7 +88,7 @@ This repository does not and will not contain the game's executable, its assets,
 
 ## Structure
 
-See the diagram above. **rexbox** (`third_party/rexbox`, a submodule) is the reusable, title-agnostic Xbox runtime, built in reJSRF and split out for both projects; **game/ct3** holds the recompiled code (the original x86 lifted to C, generated locally), the decompiled code that replaces it function by function, and the title profile; **xboxrecomp** (`third_party/xboxrecomp`, a submodule) is upstream v0.15.0, the source of the recompilation pipeline and the lifter ABI header. More: [ARCHITECTURE.md](ARCHITECTURE.md), [design i001](docs/design/20261020-i001-project-bootstrap.md), [project charter](docs/PROJECT_CHARTER.md).
+See the diagram above. **rexbox** (`third_party/rexbox`, a submodule) is the reusable, title-agnostic Xbox runtime, built in reJSRF and split out for both projects; **game/ct3** holds the recompiled code (the original x86 lifted to C, generated locally), the decompiled code that replaces it function by function, and the title profile; **xboxrecomp** (`third_party/xboxrecomp`, a submodule) is upstream v0.17.0, the source of the recompilation pipeline and the lifter ABI header. More: [ARCHITECTURE.md](ARCHITECTURE.md), [design i001](docs/design/20261020-i001-project-bootstrap.md), [project charter](docs/PROJECT_CHARTER.md).
 
 ## Build (Win32)
 

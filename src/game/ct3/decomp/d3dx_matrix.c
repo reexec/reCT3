@@ -320,7 +320,7 @@ void sub_000E4CB7(void)
     g_fp_stack[(top + 2u) & 7u] = c4_last;
     g_fp_stack[(top + 1u) & 7u] = c0_x87;
     g_fp_stack[top & 7u] = c0_last;
-    g_ebp = frame;
-    g_seh_ebp = frame;
+    g_ebp = MEM32(frame); /* leave: the caller's ebp, saved at entry */
+    g_seh_ebp = g_ebp;
     g_esp = esp + 16; /* leave; ret 12 */
 }
