@@ -58,7 +58,7 @@ build/linux-x64-release/src/app/rect3 roms
 | Win32 x86 | 빌드됨(게임 없이). rexbox probe 통과 |
 | Win64 | 예정 |
 | Linux x64 | 재컴파일 코드 생성, 빌드, CTest 7/7, 어트랙트 데모 실행(실기 Ubuntu 26.04, GCC 15.2, RTX 4090: 3D 데모 약 59 fps; WSL2 Ubuntu 24.04, GCC 13; [가이드](docs/guides/linux-setup-and-build.md)) |
-| Linux x86 | 빌드되고 어트랙트 데모까지 실행됨(WSL2 Ubuntu 24.04, GCC 13). 실기 확인 예정 |
+| Linux x86 | 재컴파일 코드 생성, 빌드, CTest 7/7, 어트랙트 데모 실행(실기 Ubuntu 26.04, GCC 15.2, RTX 4090: 3D 데모 약 59 fps, NVIDIA Wayland에서는 `SDL_VIDEO_DRIVER=x11`; WSL2 Ubuntu 24.04, GCC 13; [가이드](docs/guides/linux-setup-and-build.md)) |
 | Web (wasm32) | 예정 |
 | Android | 예정 |
 
@@ -100,7 +100,7 @@ See the commands above: with the game files under `roms/`, build `rexbox_xdk_sym
 
 ## Platform status
 
-Win32 x86 builds (without a game) and the rexbox probes pass; on Linux x64 the recompiled code is generated, the game builds, CTest passes 7/7 and the attract demo runs (a Linux machine with Ubuntu 26.04, GCC 15.2 and an RTX 4090, the 3D demo at about 59 fps, and WSL2 Ubuntu 24.04 with GCC 13; [guide](docs/guides/linux-setup-and-build.md)); Linux x86 builds and runs to the attract demo on WSL2, with a Linux machine still to be checked; Win64, the web (wasm32) and Android are planned.
+Win32 x86 builds (without a game) and the rexbox probes pass; on Linux x64 and x86 the recompiled code is generated, the game builds, CTest passes 7/7 and the attract demo runs (a Linux machine with Ubuntu 26.04, GCC 15.2 and an RTX 4090, the 3D demo at about 59 fps, `SDL_VIDEO_DRIVER=x11` on NVIDIA Wayland for x86; WSL2 Ubuntu 24.04 with GCC 13; [guide](docs/guides/linux-setup-and-build.md)); Win64, the web (wasm32) and Android are planned.
 
 ## Contributing and working rules
 
