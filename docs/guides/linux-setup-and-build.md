@@ -2,7 +2,7 @@
 
 근거: [설계 i025](../design/20261025-i025-linux-build.md), [작업 로그 i025](../work-logs/20261025-i025-linux-build.md), rexbox의 [Linux 가이드](../../third_party/rexbox/docs/guides/linux-setup-and-build.md)
 
-Linux x64와 x86(-m32)에서 재컴파일 코드를 생성하고, 게임을 빌드하고 실행한다. Linux 실기(Ubuntu 26.04, GCC 15.2, CMake 4.2, Ninja 1.13, Python 3.14, RTX 4090)에서 생성, x64 빌드와 실행을 확인했고, WSL2(Ubuntu 24.04, GCC 13, CMake 3.28, Ninja 1.11)에서 x64·x86 빌드와 실행을 확인했다. 실기의 x86 빌드는 아직 확인하지 않았다.
+Linux x64와 x86(-m32)에서 재컴파일 코드를 생성하고, 게임을 빌드하고 실행한다. Linux 실기(Ubuntu 26.04, GCC 15.2, CMake 4.2, Ninja 1.13, Python 3.14, RTX 4090)와 WSL2(Ubuntu 24.04, GCC 13, CMake 3.28, Ninja 1.11)에서 생성, x64·x86 빌드와 실행을 확인했다.
 
 ```mermaid
 flowchart LR
@@ -31,6 +31,11 @@ sudo apt-get install -y gcc-multilib g++-multilib \
 ```
 
 * SDL3는 X11 확장(XScrnSaver, XTest 등)의 개발 패키지가 없으면 configure에서 `Couldn't find dependency package for XSCRNSAVER`처럼 멈춘다. 그 이름의 패키지(x86이면 `:i386`)를 설치한다.
+* `libxtst-dev:i386` 설치가 `trying to overwrite shared /usr/share/man/man3/XTestQueryExtension.3.gz, which is different from other instances of package libxtst-dev:i386`로 실패하면(Ubuntu 26.04, 2:1.2.5-1ubuntu0.1: i386·amd64 판의 man 페이지 11개가 서로 다른 docbook-xsl로 생성되어 다름, 헤더는 같음) 다음으로 설치한다(man 페이지만 덮어쓴다):
+
+  ```bash
+  sudo apt-get -o Dpkg::Options::=--force-overwrite install -y libxtst-dev:i386
+  ```
 * i386 목록을 설치할 때 `libglib2.0-dev:i386 : Depends: libglib2.0-dev-bin:i386 … held broken packages`로 멈추면, 앞의 선행 설치(`libglib2.0-dev-bin qemu-user`)를 빠뜨린 것이다. glib 2.80.0-6ubuntu3.10의 개발 파일은 `python3 | qemu-user | qemu-user-static`에 의존한다. i386 패키지에서 이 `python3`는 i386 `python3`라서, 설치된 amd64 Python과 충돌한다(rexbox #46).
 * 창 표시에는 OpenGL 3.3 이상이 필요하다.
 * `capstone`은 재컴파일 파이프라인(disasm 단계)이 쓴다. Ubuntu 24.04 이후의 시스템 Python에는 `pip install`이 막혀 있으므로 apt의 `python3-capstone`을 쓴다. 가상 환경을 쓰려면 `python3 -m venv .venv && .venv/bin/pip install capstone` 뒤 `.venv/bin/python`으로 스크립트를 실행한다.
@@ -80,12 +85,16 @@ cmake --preset linux-x64-release && cmake --build --preset linux-x64-release && 
 ```bash
 mkdir -p ~/ct3run && cd ~/ct3run                      # 게임의 HDD(hdd/: 캐시·세이브)가 여기에 생긴다
 ~/reCT3/build/linux-x64-release/src/app/rect3 ~/reCT3/roms
+# x86 빌드를 NVIDIA Wayland 세션에서 돌릴 때 (XWayland 우회):
+SDL_VIDEO_DRIVER=x11 ~/reCT3/build/linux-x86-release/src/app/rect3 ~/reCT3/roms
 # 창 없이 진단만:
 REXBOX_DISPLAY=hidden REXBOX_AUDIO=none REXBOX_WATCHDOG=100 REXBOX_D3D8_PROFILE=600 \
   ~/reCT3/build/linux-x64-release/src/app/rect3 ~/reCT3/roms
 ```
 
 인자는 게임 디렉터리다(위 예는 저장소를 `~/reCT3`에 받은 경우). 게임의 HDD는 현재 폴더의 `hdd/`에 만들어지고 `RECT3_HDD_ROOT`로 바꾼다. 설정은 실행 파일 옆 `rect3.ini`에 저장된다. 환경 변수(`REXBOX_*`), 창 조작, 설정 메뉴는 Win32와 같다([rexbox ARCHITECTURE §5](../../third_party/rexbox/ARCHITECTURE.md)). 처음 실행에서는 타이틀이 캐시 파티션(`hdd/Partition5`)을 채우느라 데모 시작이 늦다. `REXBOX_SAMPLE`(샘플링 프로파일러)은 Linux에서 거부된다. 음악이 한 구간을 반복하면(issue #29) 로그에 `[dsound] buffer ... its writer stopped`와 스레드 상태, 호스트 콜스택(`[stack]`)이 남는다. 그 로그를 issue에 붙인다.
+
+x86 빌드를 NVIDIA 드라이버의 Wayland 세션에서 돌리면 `[d3d8] cannot open the display: SDL_CreateWindow failed: unable to create an EGL window surface`가 나고 화면 없이 진행된다(draws 0). NVIDIA 595.99.02의 32비트 `libnvidia-egl-wayland2.so.1` 결함이다(x64 판과 구형 `libnvidia-egl-wayland.so.1`의 i386 판은 정상). `SDL_VIDEO_DRIVER=x11`(XWayland)로 우회한다.
 
 ## 7. WSL2
 
@@ -107,11 +116,11 @@ REXBOX_DISPLAY=hidden REXBOX_AUDIO=none REXBOX_WATCHDOG=100 REXBOX_D3D8_PROFILE=
 
 Basis: [design i025](../design/20261025-i025-linux-build.md), [work log i025](../work-logs/20261025-i025-linux-build.md), rexbox's [Linux guide](../../third_party/rexbox/docs/guides/linux-setup-and-build.md)
 
-Generates the recompiled code, builds and runs the game on Linux x64 and x86 (-m32). On a Linux machine (Ubuntu 26.04, GCC 15.2, CMake 4.2, Ninja 1.13, Python 3.14, RTX 4090) the generation and the x64 build and run are checked; on WSL2 (Ubuntu 24.04, GCC 13, CMake 3.28, Ninja 1.11) the x64 and x86 builds and runs. The x86 build on a Linux machine is not checked yet. The diagram above shows the steps.
+Generates the recompiled code, builds and runs the game on Linux x64 and x86 (-m32). On a Linux machine (Ubuntu 26.04, GCC 15.2, CMake 4.2, Ninja 1.13, Python 3.14, RTX 4090) and WSL2 (Ubuntu 24.04, GCC 13, CMake 3.28, Ninja 1.11) the generation and the x64 and x86 builds and runs are checked. The diagram above shows the steps.
 
 ## 1. Requirements
 
-The apt packages above, `python3-capstone` included (the x86 build adds the i386 architecture, `gcc-multilib`/`g++-multilib` and the `:i386` versions of the development packages, after installing the amd64 `libglib2.0-dev-bin` and `qemu-user` first: glib 2.80.0-6ubuntu3.10's development files depend on `python3 | qemu-user | qemu-user-static`, which for an i386 package means `python3:i386`, and without that step apt stops with `libglib2.0-dev:i386 : Depends: libglib2.0-dev-bin:i386 … held broken packages`; rexbox #46, issue #39). SDL3 stops at configure when an X11 extension's development package is missing (`Couldn't find dependency package for XSCRNSAVER` and the like): install that package (`:i386` for x86). A window needs OpenGL 3.3 or newer. `capstone` is used by the recompilation pipeline (the disasm stage); the system Python of Ubuntu 24.04 and later refuses `pip install`, so take apt's `python3-capstone`, or use a virtual environment (`python3 -m venv .venv && .venv/bin/pip install capstone`, then run the scripts with `.venv/bin/python`). A dump of a Crazy Taxi 3: High Roller (Japan) disc you own is needed.
+The apt packages above, `python3-capstone` included (the x86 build adds the i386 architecture, `gcc-multilib`/`g++-multilib` and the `:i386` versions of the development packages, after installing the amd64 `libglib2.0-dev-bin` and `qemu-user` first: glib 2.80.0-6ubuntu3.10's development files depend on `python3 | qemu-user | qemu-user-static`, which for an i386 package means `python3:i386`, and without that step apt stops with `libglib2.0-dev:i386 : Depends: libglib2.0-dev-bin:i386 … held broken packages`; rexbox #46, issue #39). SDL3 stops at configure when an X11 extension's development package is missing (`Couldn't find dependency package for XSCRNSAVER` and the like): install that package (`:i386` for x86). If installing `libxtst-dev:i386` fails with `trying to overwrite shared /usr/share/man/man3/XTestQueryExtension.3.gz, which is different from other instances of package libxtst-dev:i386` (Ubuntu 26.04, 2:1.2.5-1ubuntu0.1: the eleven man pages of the i386 and amd64 packages differ because they were generated by different docbook-xsl versions; the headers are identical), install it with: `sudo apt-get -o Dpkg::Options::=--force-overwrite install -y libxtst-dev:i386` (only the man pages are overwritten). A window needs OpenGL 3.3 or newer. `capstone` is used by the recompilation pipeline (the disasm stage); the system Python of Ubuntu 24.04 and later refuses `pip install`, so take apt's `python3-capstone`, or use a virtual environment (`python3 -m venv .venv && .venv/bin/pip install capstone`, then run the scripts with `.venv/bin/python`). A dump of a Crazy Taxi 3: High Roller (Japan) disc you own is needed.
 
 ## 2. Getting the repository
 
@@ -131,7 +140,7 @@ Configure the preset and build `rexbox_xdk_symbols` first (`cmake --preset linux
 
 ## 6. Run
 
-Run from a directory of your own with the game directory as the argument, as in section 6 above: the game's hard disk is created under `hdd/` in the current directory (`RECT3_HDD_ROOT` moves it), and settings are saved in `rect3.ini` next to the executable; `REXBOX_DISPLAY=hidden REXBOX_AUDIO=none REXBOX_WATCHDOG=100` gives a diagnostic run without a window. The `REXBOX_*` variables, the window and the settings menu are the same as on Win32 ([rexbox ARCHITECTURE section 5](../../third_party/rexbox/ARCHITECTURE.md)). On the first run the title fills the cache partition (`hdd/Partition5`), which delays the demo. `REXBOX_SAMPLE` (the sampling profiler) is refused on Linux. When the music repeats one stretch (issue #29), the log gets `[dsound] buffer ... its writer stopped` with the thread states and host stacks (`[stack]`); attach that log to the issue.
+Run from a directory of your own with the game directory as the argument, as in section 6 above: the game's hard disk is created under `hdd/` in the current directory (`RECT3_HDD_ROOT` moves it), and settings are saved in `rect3.ini` next to the executable; `REXBOX_DISPLAY=hidden REXBOX_AUDIO=none REXBOX_WATCHDOG=100` gives a diagnostic run without a window. The `REXBOX_*` variables, the window and the settings menu are the same as on Win32 ([rexbox ARCHITECTURE section 5](../../third_party/rexbox/ARCHITECTURE.md)). On the first run the title fills the cache partition (`hdd/Partition5`), which delays the demo. `REXBOX_SAMPLE` (the sampling profiler) is refused on Linux. When the music repeats one stretch (issue #29), the log gets `[dsound] buffer ... its writer stopped` with the thread states and host stacks (`[stack]`); attach that log to the issue. Running the x86 build under an NVIDIA Wayland session logs `[d3d8] cannot open the display: SDL_CreateWindow failed: unable to create an EGL window surface` and proceeds without a picture (0 draws), due to a defect in the 32-bit `libnvidia-egl-wayland2.so.1` of NVIDIA 595.99.02 (the x64 build and the older `libnvidia-egl-wayland.so.1`'s i386 build are fine). Work around with `SDL_VIDEO_DRIVER=x11` (XWayland), e.g. `SDL_VIDEO_DRIVER=x11 ~/reCT3/build/linux-x86-release/src/app/rect3 ~/reCT3/roms`.
 
 ## 7. WSL2
 
