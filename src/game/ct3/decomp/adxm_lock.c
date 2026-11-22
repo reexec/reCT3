@@ -16,7 +16,9 @@
  * be inside together and leave out of order. Each thread therefore also
  * returns to its own priority when its last unlock is done, and the "release
  * all while TIME_CRITICAL" loop 0x000BB9C0 releases this thread's depth
- * instead. */
+ * instead. The safe-thread handshake 0x000B3060 is also wrapped as a guest
+ * wait so its spin puts this thread's guest locks down while the safe thread
+ * runs its level-5 pass (issue #52). */
 
 #include "recomp_types.h"
 #include "rexbox/runtime/guest_lock.h"
@@ -187,4 +189,21 @@ void sub_000B2A90(void)
     rexbox_guest_lock_enter(&g_adxm_lock);
     sub_000B2A90_gen();
     rexbox_guest_lock_leave(&g_adxm_lock);
+}
+
+extern void sub_000B3060_gen(void);
+
+/* 0x000B3060, cdecl: void (void) -- CRI safe-thread handshake (SVM callback 5).
+ *
+ * Sets [0x2DFDA0] and loops SetThreadPriority/ResumeThread on the safe thread
+ * until sub_000B3180 clears the flag after its level-5 pass, which takes the
+ * ADXM lock. On the Xbox the raised safe thread preempted the caller; here the
+ * caller would spin holding the host lock while the safe thread waits for it.
+ * Announcing the spin as a wait puts the guest locks down until the handshake
+ * ends (issue #52, docs/design/20261123-i052-safe-thread-handshake.md). */
+void sub_000B3060(void)
+{
+    rexbox_guest_wait_begin("CRI safe-thread handshake (000B3060)");
+    sub_000B3060_gen();
+    rexbox_guest_wait_end();
 }
